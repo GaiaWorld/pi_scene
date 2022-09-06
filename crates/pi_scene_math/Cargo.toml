@@ -1,0 +1,18 @@
+[package]
+name = "pi_scene_math"
+version = "0.0.1"
+authors = ["baip0002 <2494156981@qq.com>"]
+edition = "2021"
+description = "Scene Data render."
+repository = "https://github.com/GaiaWorld/pi_scene"
+license = "MIT OR Apache-2.0"
+keywords = ["scene render"]
+
+[dependencies]
+nalgebra = "0.30"
+pi_animation = { git = "https://github.com/GaiaWorld/pi_animation" }
+
+[patch."https://github.com/GaiaWorld/pi_animation"]
+pi_animation = { path = "../../../pi_animation" }
+
+# [[example]]

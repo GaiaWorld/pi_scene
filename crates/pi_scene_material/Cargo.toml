@@ -1,0 +1,15 @@
+[package]
+name = "pi_scene_material"
+version = "0.0.1"
+authors = ["baip0002 <2494156981@qq.com>"]
+edition = "2021"
+description = "Scene Data material."
+repository = "https://github.com/GaiaWorld/pi_scene"
+license = "MIT OR Apache-2.0"
+keywords = ["Scene material"]
+
+[dependencies]
+nalgebra = "0.30"
+pi_scene_math = { path = "../pi_scene_math" }
+
+# [[example]]
