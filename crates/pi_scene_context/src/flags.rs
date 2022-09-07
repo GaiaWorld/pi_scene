@@ -9,6 +9,10 @@ pub struct FlagInstanced;
 /// 节点所属渲染层级
 pub struct RenderLayerMask(pub u64);
 
+
+pub struct Enabled(pub bool);
+
+
 pub struct Camera0;
 pub struct Camera1;
 pub struct Camera2;

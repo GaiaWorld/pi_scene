@@ -85,4 +85,12 @@ impl Transform {
     pub fn decompose_from_matrix(&mut self, m: &Matrix) {
         
     }
+    pub fn compute_world_matrix(&mut self, parent: Option<&Self>) {
+        match parent {
+            Some(parent) => {
+                parent.world_matrix.mul_to(&self.local_matrix, &mut self.world_matrix);
+            },
+            None => {},
+        }
+    }
 }
