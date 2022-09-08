@@ -1,6 +1,6 @@
 use std::ops::IndexMut;
 
-use nalgebra::{Translation3, Norm, clamp, AbstractRotation};
+use nalgebra::{Translation3, Norm, clamp, AbstractRotation, UnitQuaternion, Rotation3};
 
 use crate::{Number, Vector3, Matrix, Quaternion};
 
@@ -161,12 +161,69 @@ impl TToolVector3 for Vector3 {
 }
 
 pub trait TToolQuaternion {
+    /// * `x` Pitch
+    /// * `y` Yaw
+    /// * `z` Roll
+    fn from_euler_angles_xyz(x: Number, y: Number, z: Number) -> Self;
+    fn from_rotation_matrix(m: &Matrix) -> Self;
+    fn rotate_yaw_pitch_roll(yaw: Number, pitch: Number, roll: Number, result: &mut Quaternion);
     fn rotation_quaternion_from_axis(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Quaternion);
     fn to_euler_angles(&self, result: &mut Vector3);
 }
 
+impl TToolQuaternion for Quaternion {
+
+    fn from_euler_angles_xyz(x: Number, y: Number, z: Number) -> Self {
+        Quaternion::from_euler_angles(z, x, y)
+    }
+    
+    fn from_rotation_matrix(m: &Matrix) -> Self {
+        // Matrix::from_scaled_axis(axisangle)
+        // let r = Rotation3::from_euler_angles(roll, pitch, yaw)
+        // Quaternion::from_rotation_matrix(rotmat)
+        Quaternion::from_euler_angles(0., 0., 0.)
+    }
+    
+    fn rotate_yaw_pitch_roll(yaw: Number, pitch: Number, roll: Number, result: &mut Quaternion) {
+        let r = Quaternion::from_euler_angles(roll, pitch, yaw);
+        result.clone_from(&r);
+    }
+
+    fn rotation_quaternion_from_axis(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Quaternion) {
+        let m = Matrix::from_xyz_axes(axis1, axis2, axis3);
+
+        todo!()
+    }
+
+    fn to_euler_angles(&self, result: &mut Vector3) {
+        let (z, x, y) = Quaternion::euler_angles(&self);
+        result.x = x;
+        result.y = y;
+        result.z = z;
+    }
+}
+
 pub trait TToolMatrix {
+    fn from_xyz_axes(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3) -> Self;
     fn compose(scaling: &Vector3, quaternion: &Quaternion, translation: &Vector3, result: &mut Matrix);
     fn decompose(m: &mut Matrix, scaling: Option<&mut Vector3>, quaternion: Option<&mut Quaternion>, translation: Option<&mut Vector3>);
     fn get_rotation_matrix(&self, result: &mut Matrix);
+}
+
+impl TToolMatrix for Matrix {
+    fn from_xyz_axes(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3) -> Self {
+        todo!()
+    }
+
+    fn compose(scaling: &Vector3, quaternion: &Quaternion, translation: &Vector3, result: &mut Matrix) {
+        todo!()
+    }
+
+    fn decompose(m: &mut Matrix, scaling: Option<&mut Vector3>, quaternion: Option<&mut Quaternion>, translation: Option<&mut Vector3>) {
+        todo!()
+    }
+
+    fn get_rotation_matrix(&self, result: &mut Matrix) {
+        todo!()
+    }
 }

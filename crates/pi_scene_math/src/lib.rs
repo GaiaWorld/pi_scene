@@ -1,8 +1,10 @@
 ///! 数值类型设定在此处限定, 简化拓展和修改 f32/f64
 
 pub mod vector;
+pub mod plane;
+pub mod frustum;
 
-use nalgebra::{RealField, Vector2 as NVector2, Vector3 as NVector3, Dim, SimdValue, Vector4 as NVector4, Quaternion as NQuaternion, Matrix4 as NMatrix4};
+use nalgebra::{RealField, Vector2 as NVector2, Vector3 as NVector3, Dim, SimdValue, Vector4 as NVector4, UnitQuaternion as NQuaternion, Matrix4 as NMatrix4};
 
 pub type Number = f32;
 

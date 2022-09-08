@@ -8,3 +8,4 @@ pub mod environment;
 pub mod tools;
 pub mod node;
 pub mod billboard;
+pub mod scene;

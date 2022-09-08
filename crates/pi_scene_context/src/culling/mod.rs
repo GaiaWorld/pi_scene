@@ -1,4 +1,4 @@
-use pi_scene_math::{vector::{ TMinimizeMaximize }, Vector3, Matrix};
+use pi_scene_math::{vector::{ TMinimizeMaximize }, Vector3, Matrix, plane::Plane, frustum::FrustumPlanes};
 
 use self::{bounding_box::BoundingBox, bounding_sphere::BoundingSphere};
 
@@ -54,4 +54,8 @@ impl BoundingInfo {
         self._box.reset(&self.minimum, &self.maximum, world);
         self._sphere.update(world);
     }
+}
+
+pub fn check_boundings(boundings: &Vec<BoundingInfo>, frustum_planes: &FrustumPlanes, result: &mut Vec<bool>) {
+
 }
