@@ -1,4 +1,4 @@
-use pi_scene_math::{vector::{ TMinimizeMaximize }, Vector3, Matrix};
+use pi_scene_math::{vector::{ TMinimizeMaximize }, Vector3, Matrix, frustum::FrustumPlanes};
 
 
 pub struct BoundingSphere {
@@ -43,5 +43,14 @@ impl BoundingSphere {
             // 计算 radius_world
             // world.
         }
+    }
+
+    pub fn is_center_in_frustum(&self, frustum_planes: &FrustumPlanes) -> bool {
+        // TODo
+        true
+    }
+
+    pub fn is_in_frustum(&self, frustum_planes: &FrustumPlanes) -> bool {
+        true
     }
 }

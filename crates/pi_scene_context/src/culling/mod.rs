@@ -5,6 +5,15 @@ use self::{bounding_box::BoundingBox, bounding_sphere::BoundingSphere};
 pub mod bounding_box;
 pub mod bounding_sphere;
 
+/// 检测级别
+/// * 
+pub enum ECullingStrategy {
+    /// 检测 包围球中心 在不在 视锥, 检测 包围球 在不在 视锥
+    Optimistic,
+    /// 检测 包围球中心 在不在 视锥, 检测 包围球 在不在 视锥, 检测 包围盒 在不在 视锥
+    STANDARD,
+}
+
 pub trait TIntersect {
     fn intersects_point(&self, p: &Vector3) -> bool;
     fn intersects_box(&self, b: &BoundingBox) -> bool;
@@ -20,6 +29,7 @@ pub struct BoundingInfo {
     direction0: Vector3,
     direction1: Vector3,
     direction2: Vector3,
+    pub culling_strategy: ECullingStrategy,
 }
 
 impl Default for BoundingInfo {
@@ -33,7 +43,10 @@ impl Default for BoundingInfo {
         let _sphere = BoundingSphere::new(&minimum, &maximum, &world);
         Self {
             minimum, maximum, _box, _sphere,
-            direction0: Vector3::zeros(), direction1: Vector3::zeros(), direction2: Vector3::zeros(),
+            direction0: Vector3::zeros(),
+            direction1: Vector3::zeros(),
+            direction2: Vector3::zeros(),
+            culling_strategy: ECullingStrategy::STANDARD,
         }
     }
 }

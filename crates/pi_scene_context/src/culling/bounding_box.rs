@@ -1,4 +1,4 @@
-use pi_scene_math::{vector::{ TMinimizeMaximize }, Vector3, Matrix};
+use pi_scene_math::{vector::{ TMinimizeMaximize }, Vector3, Matrix, frustum::FrustumPlanes};
 
 pub struct BoundingBox {
     center: Vector3,
@@ -71,5 +71,9 @@ impl BoundingBox {
             max_world.sub_to(&min_world, &mut self.extend_world);
             self.extend_world.scale_mut(0.5);
         }
+    }
+
+    pub fn is_in_frustum(&self, frustum_planes: &FrustumPlanes) -> bool {
+        true
     }
 }
