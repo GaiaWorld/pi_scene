@@ -67,6 +67,10 @@ impl BoundingInfo {
         self._box.reset(&self.minimum, &self.maximum, world);
         self._sphere.update(world);
     }
+
+    pub fn is_in_frustum(&self, frustum_planes: &FrustumPlanes) -> bool {
+        true
+    }
 }
 
 pub fn check_boundings(boundings: &Vec<BoundingInfo>, frustum_planes: &FrustumPlanes, result: &mut Vec<bool>) {
