@@ -1,5 +1,4 @@
-use pi_scene_math::{vector::{ TMinimizeMaximize }, Vector3, Matrix, frustum::FrustumPlanes};
-
+use pi_scene_math::{frustum::FrustumPlanes, vector::TMinimizeMaximize, Matrix, Vector3};
 
 pub struct BoundingSphere {
     radius: f32,
@@ -10,7 +9,12 @@ pub struct BoundingSphere {
 
 impl Default for BoundingSphere {
     fn default() -> Self {
-        Self { radius: 1., center: Vector3::zeros(), radius_world: 1., center_world: Vector3::zeros() }
+        Self {
+            radius: 1.,
+            center: Vector3::zeros(),
+            radius_world: 1.,
+            center_world: Vector3::zeros(),
+        }
     }
 }
 
@@ -24,7 +28,6 @@ impl BoundingSphere {
     }
 
     pub fn reset(&mut self, min: &Vector3, max: &Vector3, world: &Matrix) {
-
         let distance = min.metric_distance(max);
 
         max.add_to(min, &mut self.center);
@@ -46,11 +49,53 @@ impl BoundingSphere {
     }
 
     pub fn is_center_in_frustum(&self, frustum_planes: &FrustumPlanes) -> bool {
-        // TODo
-        true
+        let center = &self.center_world;
+
+        if frustum_planes.near.dot_coordinate(center) < 0.0 {
+            return false;
+        }
+        if frustum_planes.far.dot_coordinate(center) < 0.0 {
+            return false;
+        }
+        if frustum_planes.left.dot_coordinate(&center) < 0.0 {
+            return false;
+        }
+        if frustum_planes.right.dot_coordinate(center) < 0.0 {
+            return false;
+        }
+        if frustum_planes.top.dot_coordinate(center) < 0.0 {
+            return false;
+        }
+        if frustum_planes.bottom.dot_coordinate(center) < 0.0 {
+            return false;
+        }
+
+        return true;
     }
 
     pub fn is_in_frustum(&self, frustum_planes: &FrustumPlanes) -> bool {
-        true
+        let center = &self.center_world;
+        let radius = self.radius_world;
+
+        if frustum_planes.near.dot_coordinate(center) <= -radius {
+            return false;
+        }
+        if frustum_planes.far.dot_coordinate(center) <= -radius {
+            return false;
+        }
+        if frustum_planes.left.dot_coordinate(&center) <= -radius {
+            return false;
+        }
+        if frustum_planes.right.dot_coordinate(center) <= -radius {
+            return false;
+        }
+        if frustum_planes.top.dot_coordinate(center) <= -radius {
+            return false;
+        }
+        if frustum_planes.bottom.dot_coordinate(center) <= -radius {
+            return false;
+        }
+
+        return true;
     }
 }
