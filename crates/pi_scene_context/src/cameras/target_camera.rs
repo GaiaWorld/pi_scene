@@ -1,6 +1,6 @@
-use pi_scene_math::{Vector3, vector::TToolVector3};
+use pi_scene_math::{Vector3, vector::TToolVector3, coordiante_system::CoordinateSytem3};
 
-use crate::transform::Transform;
+use crate::transform_node::TransformNode;
 
 use super::camera::Camera;
 
@@ -15,13 +15,13 @@ impl Default for TargetCamera {
     fn default() -> Self {
         Self {
             target: Vector3::zeros(),
-            up: Vector3::up(),
+            up: CoordinateSytem3::up(),
         }
     }
 }
 
 impl TargetCamera {
-    pub fn set_target(&mut self, transform: &Transform, camera: &mut Camera, target: &Vector3) {
+    pub fn set_target(&mut self, transform: &TransformNode, camera: &mut Camera, target: &Vector3) {
         
     }
 }
