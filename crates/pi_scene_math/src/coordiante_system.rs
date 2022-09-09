@@ -1,6 +1,6 @@
 use nalgebra::{clamp, ComplexField};
 
-use crate::{vector::{TToolVector3, TToolMatrix}, Vector3, Number, Matrix, Quaternion, Affine3, Rotation3};
+use crate::{vector::{TToolVector3, TToolMatrix, TToolRotation}, Vector3, Number, Matrix, Quaternion, Affine3, Rotation3};
 
 
 #[derive(Debug, Clone, Copy)]
@@ -15,11 +15,17 @@ pub struct CoordinateSytem3 {
 
 impl Default for CoordinateSytem3 {
     fn default() -> Self {
-        Self { mode: ECoordinateSytem3::Left }
+        Self::left()
     }
 }
 
 impl CoordinateSytem3 {
+    pub fn left() -> Self {
+        Self { mode: ECoordinateSytem3::Left }
+    }
+    pub fn right() -> Self {
+        Self { mode: ECoordinateSytem3::Right }
+    }
     pub fn mode(& self) -> ECoordinateSytem3 {
         self.mode 
     }
@@ -139,7 +145,7 @@ impl TToolMatrix for CoordinateSytem3 {
         // todo!()
     }
 
-    fn matrix4_decompose(m: &mut Matrix, scaling: Option<&mut Vector3>, quaternion: Option<&mut Quaternion>, translation: Option<&mut Vector3>) -> bool {
+    fn matrix4_decompose(m: &Matrix, scaling: Option<&mut Vector3>, quaternion: Option<&mut Quaternion>, translation: Option<&mut Vector3>) -> bool {
         match quaternion {
             Some(quaternion) => {
                 let mut rotation = Rotation3::default();
@@ -168,7 +174,7 @@ impl TToolMatrix for CoordinateSytem3 {
         affine.mul_to(&rotmat.to_homogeneous(), result);
     }
 
-    fn matrix4_decompose_rotation(m: &mut Matrix, scaling: Option<&mut Vector3>, rotation: Option<&mut Rotation3>, translation: Option<&mut Vector3>) -> bool {
+    fn matrix4_decompose_rotation(m: &Matrix, scaling: Option<&mut Vector3>, rotation: Option<&mut Rotation3>, translation: Option<&mut Vector3>) -> bool {
         // todo!()
         if let Some(translation) = translation {
             translation.copy_from(&m.fixed_slice::<3, 1>(0, 3));
@@ -217,13 +223,85 @@ impl TToolMatrix for CoordinateSytem3 {
             } else {
                 if let Some(rotation) =  rotation {
                     rotation.matrix_mut_unchecked().copy_from_slice(&[
-                        m00 / sx, m01 / sy, m02 / sz,
-                        m10 / sx, m11 / sy, m12 / sz,
-                        m20 / sx, m21 / sy, m22 / sz,
+                        m00 / sx, m10 / sy, m20 / sz,
+                        m01 / sx, m11 / sy, m21 / sz,
+                        m02 / sx, m12 / sy, m22 / sz,
                     ]);
                 }
                 return true;
             }
         }
+    }
+}
+
+impl TToolRotation for CoordinateSytem3 {
+    fn quaternion_from_euler_angles(&self, x: Number, y: Number, z: Number) -> Quaternion {
+        Quaternion::from_rotation_matrix(&self.rotation_matrix_from_euler_angles(x, y, z))
+    }
+
+    fn quaternion_mut_yaw_pitch_roll(&self, yaw: Number, pitch: Number, roll: Number, result: &mut Quaternion) {
+        result.clone_from(&Quaternion::from_rotation_matrix(&self.rotation_matrix_from_euler_angles(yaw, pitch, roll)));
+    }
+
+    fn quaternion_mut_axis(&self, axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Quaternion) {
+        todo!()
+    }
+
+    fn quaternion_to_euler_angles(&self, quaternion: &Quaternion, result: &mut Vector3) {
+        let (z, x, y) = quaternion.euler_angles();
+        match self.mode {
+            ECoordinateSytem3::Left => {
+                result.copy_from_slice(&[-x, -y, -z]);
+            },
+            ECoordinateSytem3::Right => {
+                result.copy_from_slice(&[x, y, z]);
+            },
+        }
+    }
+
+    fn rotation_matrix_from_euler_angles(&self, x: Number, y: Number, z: Number) -> Rotation3 {
+        match self.mode {
+            ECoordinateSytem3::Left => {
+                Rotation3::from_euler_angles(-x, -y, -z)
+            },
+            ECoordinateSytem3::Right => {
+                Rotation3::from_euler_angles(x, y, z)
+            },
+        }
+    }
+
+    fn rotation_matrix_mut_yaw_pitch_roll(&self, yaw: Number, pitch: Number, roll: Number, result: &mut Rotation3) {
+        match self.mode {
+            ECoordinateSytem3::Left => {
+                result.clone_from(&Rotation3::from_euler_angles(-roll, -pitch, -yaw));
+            },
+            ECoordinateSytem3::Right => {
+                result.clone_from(&Rotation3::from_euler_angles(roll, pitch, yaw));
+            },
+        }
+    }
+
+    fn rotation_matrix_mut_axis(&self, axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Rotation3) {
+        todo!()
+    }
+
+    fn rotation_matrix_to_euler_angles(&self, rotation: &Rotation3, result: &mut Vector3) {
+        let (z, x, y) = rotation.euler_angles();
+        match self.mode {
+            ECoordinateSytem3::Left => {
+                result.copy_from_slice(&[-x, -y, -z]);
+            },
+            ECoordinateSytem3::Right => {
+                result.copy_from_slice(&[x, y, z]);
+            },
+        }
+    }
+
+    fn quaternion_mut_euler_angles(&self, x: Number, y: Number, z: Number, result: &mut Quaternion) {
+        result.clone_from(&self.quaternion_from_euler_angles(x, y, z));
+    }
+
+    fn rotation_matrix_mut_euler_angles(&self, x: Number, y: Number, z: Number, result: &mut Rotation3) {
+        result.clone_from(&self.rotation_matrix_from_euler_angles(x, y, z));
     }
 }

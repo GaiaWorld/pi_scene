@@ -65,21 +65,34 @@ pub trait TToolVector3 {
 
 
 
-pub trait TToolQuaternion {
+pub trait TToolRotation {
     /// * `x` Pitch
     /// * `y` Yaw
     /// * `z` Roll
-    fn from_euler_angles_xyz(x: Number, y: Number, z: Number) -> Self;
-    fn from_rotation_matrix(m: &Matrix) -> Self;
-    fn rotate_yaw_pitch_roll(yaw: Number, pitch: Number, roll: Number, result: &mut Quaternion);
-    fn rotation_quaternion_from_axis(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Quaternion);
-    fn to_euler_angles(&self, result: &mut Vector3);
+    fn quaternion_from_euler_angles(&self, x: Number, y: Number, z: Number) -> Quaternion;
+    fn quaternion_mut_euler_angles(&self, x: Number, y: Number, z: Number, result: &mut Quaternion);
+    
+    /// * `x` Pitch
+    /// * `y` Yaw
+    /// * `z` Roll
+    fn quaternion_mut_yaw_pitch_roll(&self, yaw: Number, pitch: Number, roll: Number, result: &mut Quaternion);
+    fn quaternion_mut_axis(&self, axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Quaternion);
+    fn quaternion_to_euler_angles(&self, rotation: &Quaternion, result: &mut Vector3);
+    fn rotation_matrix_from_euler_angles(&self, x: Number, y: Number, z: Number) -> Rotation3;
+    fn rotation_matrix_mut_euler_angles(&self, x: Number, y: Number, z: Number, result: &mut Rotation3);
+    
+    /// * `x` Pitch
+    /// * `y` Yaw
+    /// * `z` Roll
+    fn rotation_matrix_mut_yaw_pitch_roll(&self, yaw: Number, pitch: Number, roll: Number, result: &mut Rotation3);
+    fn rotation_matrix_mut_axis(&self, axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Rotation3);
+    fn rotation_matrix_to_euler_angles(&self, rotation: &Rotation3, result: &mut Vector3);
 }
 
 pub trait TToolMatrix {
     fn matrix4_from_xyz_axes(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Matrix);
-    fn matrix4_decompose(m: &mut Matrix, scaling: Option<&mut Vector3>, quaternion: Option<&mut Quaternion>, translation: Option<&mut Vector3>) -> bool;
-    fn matrix4_decompose_rotation(m: &mut Matrix, scaling: Option<&mut Vector3>, rotation: Option<&mut Rotation3>, translation: Option<&mut Vector3>) -> bool;
+    fn matrix4_decompose(m: &Matrix, scaling: Option<&mut Vector3>, quaternion: Option<&mut Quaternion>, translation: Option<&mut Vector3>) -> bool;
+    fn matrix4_decompose_rotation(m: &Matrix, scaling: Option<&mut Vector3>, rotation: Option<&mut Rotation3>, translation: Option<&mut Vector3>) -> bool;
     fn matrix4_compose(scaling: &Vector3, quaternion: &Quaternion, translation: &Vector3, result: &mut Matrix);
     fn matrix4_compose_euler_angle(scaling: &Vector3, eulers: &Vector3, translation: &Vector3, result: &mut Matrix);
     fn matrix4_compose_rotation(scaling: &Vector3, rotmat: &Rotation3, translation: &Vector3, result: &mut Matrix);

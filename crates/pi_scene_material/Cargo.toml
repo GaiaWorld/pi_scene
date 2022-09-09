@@ -11,5 +11,6 @@ keywords = ["Scene material"]
 [dependencies]
 nalgebra = "0.30"
 pi_scene_math = { path = "../pi_scene_math" }
+pi_scene_geometry = { path = "../pi_scene_geometry" }
 
 # [[example]]

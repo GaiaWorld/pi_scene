@@ -9,6 +9,7 @@ license = "MIT OR Apache-2.0"
 keywords = ["scene render"]
 
 [dependencies]
+approx = "0.5"
 nalgebra = "0.30"
 pi_animation = { git = "https://github.com/GaiaWorld/pi_animation" }
 

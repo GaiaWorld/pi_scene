@@ -1,6 +1,6 @@
-use crate::{Rotation3, Vector3, Number, Matrix, Quaternion, coordiante_system::CoordinateSytem3, vector::TToolMatrix};
+use crate::{Rotation3, Vector3, Number, Matrix, Quaternion, coordiante_system::CoordinateSytem3, vector::{TToolMatrix, TToolRotation}};
 
-
+#[derive(Debug)]
 pub struct Transform3 {
     /// 位移
     translation: Vector3,
@@ -21,7 +21,13 @@ impl Default for Transform3 {
 
 impl Transform3 {
     pub fn identity() -> Self {
-        Self::default()
+        Self {
+            translation: Vector3::zeros(),
+            scaling: Vector3::new(1., 1., 1.),
+            rotation: Rotation3::identity(),
+            local_matrix: Matrix::identity(),
+            dirty: false,
+        }
     }
 
     pub fn translation(&self) -> Vector3 {
@@ -38,11 +44,11 @@ impl Transform3 {
         self.translation.x = x;self.translation.y = y;self.translation.z = z;
     }
 
-    pub fn get_scaling(&self) -> Vector3 {
+    pub fn scaling(&self) -> Vector3 {
         self.scaling.clone()
     }
 
-    pub fn set_scaling(&mut self, rhs: &Vector3) {
+    pub fn scaling_mut(&mut self, rhs: &Vector3) {
         self.dirty = true;
         self.scaling.copy_from(rhs);
     }
@@ -57,9 +63,10 @@ impl Transform3 {
         self.scaling.x = s;self.scaling.y = s;self.scaling.z = s;
     }
 
-    pub fn get_rotation_euler_angles(&self) -> Vector3 {
-        let (z, x, y) = self.rotation.euler_angles();
-        Vector3::new(x, y, z)
+    pub fn get_rotation_euler_angles(&self, coord: &CoordinateSytem3) -> Vector3 {
+        let mut result = Vector3::zeros();
+        coord.rotation_matrix_to_euler_angles(&self.rotation, &mut result);
+        result
     }
 
     pub fn rotation_matrix(&self) -> Rotation3 {
@@ -76,9 +83,9 @@ impl Transform3 {
         self.dirty = true;
         self.rotation.clone_from(&rhs.to_rotation_matrix());
     }
-    pub fn set_rotation_from_euler_angles(&mut self, x: Number, y: Number, z: Number) {
+    pub fn set_rotation_from_euler_angles(&mut self, x: Number, y: Number, z: Number, coord: &CoordinateSytem3) {
         self.dirty = true;
-        self.rotation.clone_from(&Rotation3::from_euler_angles(z, x, y));
+        coord.rotation_matrix_mut_euler_angles(x, y, z, &mut self.rotation);
     }
     pub fn matrix(&self) -> &Matrix {
         &self.local_matrix
@@ -87,10 +94,95 @@ impl Transform3 {
         if self.dirty {
             let mut affine = Matrix::identity();
             affine.append_nonuniform_scaling_mut(&self.scaling);
-            affine.append_translation_mut(&self.scaling);
+            affine.append_translation_mut(&self.translation);
             affine.mul_to(&self.rotation.to_homogeneous(), &mut self.local_matrix);
         }
 
         self.dirty = false;
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use approx::assert_relative_eq;
+    use nalgebra::{Transform3 as NTransform3, Matrix3};
+
+    use crate::{coordiante_system::CoordinateSytem3, Rotation3, Vector3, vector::TToolMatrix};
+
+    use super::Transform3;
+
+    #[test]
+    fn test_transform() {
+        let coord = CoordinateSytem3::default();
+        let mut transform = Transform3::default();
+
+        println!("{:?}", transform);
+
+        transform.set_scaling_from_floats(1., 2., 3.);
+        transform.set_rotation_from_euler_angles(2., 1.0, -1.0, &coord);
+        transform.set_translation_from_floats(10.0, 0.0, 0.0);
+        transform.calc_matrix();
+
+
+        let mut rotation = Rotation3::identity();
+        let mut scaling = Vector3::new(1., 1., 1.);
+        let mut translation = Vector3::zeros();
+
+        CoordinateSytem3::matrix4_decompose_rotation(transform.matrix(), Some(&mut scaling), Some(&mut rotation), Some(&mut translation));
+        
+        println!("{:?}", transform.scaling);
+        println!("{:?}", scaling);
+        assert_relative_eq!(transform.scaling, scaling, epsilon = 0.00001);
+        
+        println!("{:?}", transform.translation);
+        println!("{:?}", translation);
+        assert_relative_eq!(transform.translation, translation, epsilon = 0.00001);
+        
+        println!("{:?}", transform.rotation);
+        println!("{:?}", rotation);
+        assert_relative_eq!(transform.rotation, rotation, epsilon = 0.00001);
+
+        // let tr = NTransform3::<f32>::from_matrix_unchecked(transform.matrix().clone());
+        // let mut mat = transform.matrix().fixed_slice::<3, 3>(0, 0);
+        // let mat = Matrix3::copy_from_slice(&mat.sli);
+        // let rot = Rotation3::from_matrix_unchecked( );
+        // println!("{:?}", rot);
+    }
+    #[test]
+    fn test_transform_right() {
+        let coord = CoordinateSytem3::right();
+        let mut transform = Transform3::default();
+
+        println!("{:?}", transform);
+
+        transform.set_scaling_from_floats(1., 2., 3.);
+        transform.set_rotation_from_euler_angles(2., 1.0, -1.0, &coord);
+        transform.set_translation_from_floats(10.0, 0.0, 0.0);
+        transform.calc_matrix();
+
+
+        let mut rotation = Rotation3::identity();
+        let mut scaling = Vector3::new(1., 1., 1.);
+        let mut translation = Vector3::zeros();
+
+        CoordinateSytem3::matrix4_decompose_rotation(transform.matrix(), Some(&mut scaling), Some(&mut rotation), Some(&mut translation));
+        
+        println!("{:?}", transform.scaling);
+        println!("{:?}", scaling);
+        assert_relative_eq!(transform.scaling, scaling, epsilon = 0.00001);
+        
+        println!("{:?}", transform.translation);
+        println!("{:?}", translation);
+        assert_relative_eq!(transform.translation, translation, epsilon = 0.00001);
+        
+        println!("{:?}", transform.rotation);
+        println!("{:?}", rotation);
+        assert_relative_eq!(transform.rotation, rotation, epsilon = 0.00001);
+
+        // let tr = NTransform3::<f32>::from_matrix_unchecked(transform.matrix().clone());
+        // let mut mat = transform.matrix().fixed_slice::<3, 3>(0, 0);
+        // let mat = Matrix3::copy_from_slice(&mat.sli);
+        // let rot = Rotation3::from_matrix_unchecked( );
+        // println!("{:?}", rot);
     }
 }

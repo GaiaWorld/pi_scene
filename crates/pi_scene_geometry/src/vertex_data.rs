@@ -1,11 +1,17 @@
 use std::sync::Arc;
 
+use pi_share::Share;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum EVertexDataFormat {
-    Float,
-    Int,
+    U8,
     U16,
+    U32,
+    F32,
+    F64,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum EVertexDataKind {
     Position,
     Position2D,
@@ -34,9 +40,42 @@ pub enum EVertexDataKind {
     UV16,
 }
 
-pub struct VertexData {
+#[derive(Debug, Clone)]
+pub struct VertexDataU8 {
     pub kind: EVertexDataKind,
-    pub data: Arc<[u8]>,
+    pub data: Share<Vec<u8>>,
+    pub offset: u32,
+    pub size: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct VertexDataU16 {
+    pub kind: EVertexDataKind,
+    pub data: Share<Vec<u16>>,
+    pub offset: u32,
+    pub size: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct VertexDataU32 {
+    pub kind: EVertexDataKind,
+    pub data: Share<Vec<u32>>,
+    pub offset: u32,
+    pub size: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct VertexDataF32 {
+    pub kind: EVertexDataKind,
+    pub data: Share<Vec<f32>>,
+    pub offset: u32,
+    pub size: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct VertexDataF64 {
+    pub kind: EVertexDataKind,
+    pub data: Share<Vec<f64>>,
     pub offset: u32,
     pub size: u32,
 }

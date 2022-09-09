@@ -10,6 +10,10 @@ keywords = ["Scene Geometry"]
 
 [dependencies]
 nalgebra = "0.30"
+pi_share = "0.4"
 pi_scene_math = { path = "../pi_scene_math" }
+
+[patch."https://github.com/GaiaWorld/pi_share.git"]
+pi_share = { path = "../../../pi_share" }
 
 # [[example]]

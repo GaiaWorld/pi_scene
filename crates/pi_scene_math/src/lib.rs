@@ -26,7 +26,7 @@ pub type Translation3 = NTranslation3<Number>;
 pub type Rotation3 = NRotation3<Number>;
 /// 等距变换 - 旋转&位移 - 相机节点
 pub type Isometry3 = NIsometry3<Number>;
-/// 相似变换 - 旋转&位移&缩放 - 普通节点
+/// 相似变换 - 旋转&位移&缩放
 pub type SimilarityMatrix3 = NSimilarityMatrix3<Number>;
 /// 仿射变换
 pub type Affine3 = NAffine3<Number>;
