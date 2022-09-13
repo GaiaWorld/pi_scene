@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, borrow::BorrowMut};
 
 use pi_share::Share;
 
@@ -70,6 +70,19 @@ pub struct VertexDataF32 {
     pub data: Share<Vec<f32>>,
     pub offset: u32,
     pub size: u32,
+}
+
+impl VertexDataF32 {
+    pub fn set(&mut self, data: &[f32], offset: usize) {
+        // let len = data.len();
+        // let end = len + offset;
+        // let store = self.data.borrow_mut();
+
+        // for i in 0..len {
+        //     let t = store.get_mut(i + offset).unwrap();
+        //     *t = data[i];
+        // }
+    }
 }
 
 #[derive(Debug, Clone)]

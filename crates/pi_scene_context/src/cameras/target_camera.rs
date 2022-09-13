@@ -25,3 +25,7 @@ impl TargetCamera {
         
     }
 }
+
+pub fn calc_camera_target(target: &TargetCamera, node: &TransformNode, camera: &mut Camera) {
+    
+}
