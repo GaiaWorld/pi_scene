@@ -10,6 +10,7 @@ keywords = ["scene control"]
 
 [dependencies]
 approx = "0.5"
+pi_slotmap = "0.1"
 pi_scene_math = { path = "../pi_scene_math" }
 pi_scene_geometry = { path = "../pi_scene_geometry" }
 pi_scene_material = { path = "../pi_scene_material" }

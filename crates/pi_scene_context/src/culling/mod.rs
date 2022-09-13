@@ -1,7 +1,8 @@
 use pi_scene_math::{
     frustum::FrustumPlanes, plane::Plane, vector::TMinimizeMaximize, Matrix, Vector3,
 };
-
+use pi_slotmap::DefaultKey;
+use std::hash;
 use self::{bounding_box::BoundingBox, bounding_sphere::BoundingSphere};
 
 pub mod bounding_box;
@@ -98,4 +99,81 @@ pub fn check_boundings(
         res_vec.push(is_in_frustum);
     }
     *result = res_vec;
+}
+
+pub trait TBoundingInfoKey: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + hash::Hash {}
+impl TBoundingInfoKey for DefaultKey {}
+impl TBoundingInfoKey for u8 {}
+impl TBoundingInfoKey for u16 {}
+impl TBoundingInfoKey for u32 {}
+impl TBoundingInfoKey for u64 {}
+impl TBoundingInfoKey for usize {}
+impl TBoundingInfoKey for u128 {}
+
+pub trait TBoundingInfoCalc<K: TBoundingInfoKey> {
+    fn add(&mut self, key: K, info: BoundingInfo);
+    fn remove(&mut self, key: K);
+    fn check_boundings(
+        &self,
+        frustum_planes: &FrustumPlanes,
+        result: &mut Vec<K>
+    );
+}
+
+pub struct VecBoundingInfoCalc {
+    recycle: Vec<usize>,
+    record: Vec<usize>,
+    list: Vec<BoundingInfo>,
+}
+
+impl Default for VecBoundingInfoCalc {
+    fn default() -> Self {
+        Self {
+            recycle: vec![],
+            record: vec![],
+            list: vec![],
+        }
+    }
+}
+
+impl TBoundingInfoCalc<usize> for VecBoundingInfoCalc {
+    fn add(&mut self, key: usize, info: BoundingInfo) {
+        match self.recycle.pop() {
+            Some(index) => {
+                self.list[index] = info;
+                self.record[index] = key;
+            },
+            None => {
+                self.list.push(info);
+                self.record.push(key);
+            },
+        } 
+    }
+
+    fn remove(&mut self, key: usize) {
+        match self.record.binary_search(&key) {
+            Ok(index) => {
+                self.recycle.push(index);
+            },
+            Err(_) => {},
+        }
+    }
+
+    fn check_boundings(
+        &self, 
+        frustum_planes: &FrustumPlanes,
+        result: &mut Vec<usize>
+    ) {
+        let len = self.list.len();
+        let mut res_vec = Vec::with_capacity(len);
+        for index in 0..len {
+            if !self.recycle.contains(&index) {
+                if self.list[index].is_in_frustum(frustum_planes) {
+                    let key = self.record.get(index).unwrap();
+                    res_vec.push(*key);
+                }
+            }
+        }
+        *result = res_vec;
+    }
 }
