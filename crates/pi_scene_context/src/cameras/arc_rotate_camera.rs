@@ -1,3 +1,7 @@
+use crate::transform_node::TransformNode;
+
+use super::{target_camera::TargetCamera, camera::Camera};
+
 
 pub struct ArcRotateCamera {
     alpha: f32,
@@ -6,6 +10,6 @@ pub struct ArcRotateCamera {
     radius: f32,
 }
 
-pub fn calc_camera_arc_rotate(target: &TargetCamera, node: &TransformNode, camera: &mut Camera) {
+pub fn calc_camera_arc_rotate(arc_camera: &ArcRotateCamera, target: &TargetCamera, node: &TransformNode, camera: &mut Camera) {
     
 }
