@@ -1,4 +1,8 @@
-use pi_scene_math::Color3;
+use pi_scene_math::{Color3, Matrix};
+
+use crate::transform_node::TransformNode;
+
+use super::direction_light::DirectionLight;
 
 
 
@@ -20,4 +24,10 @@ pub struct DirectionShadowCaster {
     pub view_depth: f32,
     /// 使用的纹理目标尺寸
     pub atlas_size: u32,
+    pub view_matrix: Matrix,
+    pub project_matrix: Matrix,
+}
+
+pub fn calc_camera_shadow_direction(light: &DirectionLight, node: &TransformNode, caster: &mut DirectionShadowCaster) {
+
 }
