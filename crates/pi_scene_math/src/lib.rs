@@ -8,7 +8,8 @@ pub mod transform;
 
 use nalgebra::{RealField, Vector2 as NVector2, Vector3 as NVector3, Dim, SimdValue, Vector4 as NVector4, UnitQuaternion as NQuaternion, 
     Matrix4 as NMatrix4, SimilarityMatrix3 as NSimilarityMatrix3, Translation3 as NTranslation3, Transform3 as NTransform3,
-    Affine3 as NAffine3, Projective3 as NProjective3, Isometry3 as NIsometry3, Rotation3 as NRotation3
+    Affine3 as NAffine3, Projective3 as NProjective3, Isometry3 as NIsometry3, Rotation3 as NRotation3,
+    Matrix2 as NMatrix2, 
 };
 
 pub type Number = f32;
@@ -32,7 +33,8 @@ pub type SimilarityMatrix3 = NSimilarityMatrix3<Number>;
 pub type Affine3 = NAffine3<Number>;
 /// 投影变换
 pub type Projective3 = NProjective3<Number>;
-pub type Matrix = NMatrix4<Number>;
+pub type Matrix     = NMatrix4<Number>;
+pub type Matrix2    = NMatrix2<Number>;
 
 
 #[cfg(test)]

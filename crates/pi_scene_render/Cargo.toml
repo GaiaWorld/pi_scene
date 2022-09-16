@@ -9,7 +9,16 @@ license = "MIT OR Apache-2.0"
 keywords = ["scene render"]
 
 [dependencies]
+wgpu = { version = "0.12", features = ["spirv", "glsl"] }
+pi_hash ="0.1"
+render_core = { git = "https://github.com/GaiaWorld/pi_render" }
 pi_animation = { git = "https://github.com/GaiaWorld/pi_animation" }
+pi_scene_geometry = { path = "../pi_scene_geometry" }
+pi_scene_material = { path = "../pi_scene_material" }
+pi_scene_pipeline_key = { path = "../pi_scene_pipeline_key" }
+
+[patch."https://github.com/GaiaWorld/pi_render"]
+pi_render = { path = "../../../pi_render" }
 
 [patch."https://github.com/GaiaWorld/pi_animation"]
 pi_animation = { path = "../../../pi_animation" }
