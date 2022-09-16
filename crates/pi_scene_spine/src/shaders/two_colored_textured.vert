@@ -2,7 +2,7 @@
 
 #define SHADER_NAME fragment:TwoColoredTextured
 
-layout(location = 0) in vec4 a_position;
+layout(location = 0) in vec2 a_position;
 layout(location = 1) in vec4 a_color;
 layout(location = 2) in vec4 a_color2;
 layout(location = 3) in vec2 a_texCoords;
@@ -20,5 +20,5 @@ void main() {
     v_light = a_color;
     v_dark = a_color2;
     v_texCoords = a_texCoords;
-    gl_Position = u_projTrans * a_position;
+    gl_Position = u_projTrans * vec4(a_position, 0., 1.);
 }

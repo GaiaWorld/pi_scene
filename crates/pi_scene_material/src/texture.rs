@@ -15,7 +15,7 @@ impl TextureKey for usize {}
 impl TextureKey for u128 {}
 
 pub trait TexturePool<K: TextureKey> {
-    fn get<'a>(&self, key: K) -> Option<&'a wgpu::TextureView>;
+    fn get(&self, key: K) -> Option<& wgpu::TextureView>;
 }
 
 pub struct OffsetScaleTexture2D {

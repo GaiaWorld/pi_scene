@@ -12,8 +12,8 @@ layout(set = 0, binding = 0) uniform Param {
     vec4 u_maskflag;
 };
 
-layout(set = 0, binding = 1) uniform sampler sampler_u_texture;
-layout(set = 0, binding = 2) uniform texture2D u_texture;
+layout(set = 1, binding = 0) uniform sampler sampler_u_texture;
+layout(set = 1, binding = 1) uniform texture2D u_texture;
 
 vec3 rgb2hsv(vec3 c)
 {

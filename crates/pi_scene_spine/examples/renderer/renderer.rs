@@ -3,9 +3,21 @@ use std::{num::NonZeroU32, time::SystemTime, sync::Arc};
 
 use image::{GenericImageView};
 use pi_render::{components::view::target_alloc::{SafeAtlasAllocator, ShareTargetView}, rhi::{device::RenderDevice, asset::{RenderRes, }, }};
+use pi_scene_material::texture::TexturePool;
 use pi_scene_math::{Matrix, Vector4};
 use pi_scene_spine::{SpineShaderPoolSimple, pipeline::{SpinePipelinePool, SpinePipelinePoolSimple}, mesh_renderer::MeshRendererPool, shaders::EShader};
 use winit::{window::Window, event::WindowEvent};
+
+pub struct DemoTexturePool {
+    pub list: Vec<wgpu::Texture>,
+    pub views: Vec<wgpu::TextureView>,
+}
+
+impl TexturePool<usize> for DemoTexturePool {
+    fn get(& self, key: usize) -> Option<& wgpu::TextureView> {
+        self.views.get(key)
+    }
+}
 
 pub struct State {
     pub surface: wgpu::Surface,
@@ -14,13 +26,13 @@ pub struct State {
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
     pub value_test: u8,
-    pub diffuse_texture: wgpu::Texture,
     pub diffuse_size: wgpu::Extent3d,
     // pub diffuse_buffer: wgpu::Buffer,
     pub lasttime: SystemTime,
     pub shaders: SpineShaderPoolSimple,
     pub pipelines: SpinePipelinePoolSimple,
     pub rendererpool: MeshRendererPool<usize>,
+    pub textures: DemoTexturePool,
 }
 
 impl State {
@@ -110,6 +122,11 @@ impl State {
 
         let mut shaders = SpineShaderPoolSimple::default();
         shaders.init(&renderdevice);
+
+        let textures = DemoTexturePool {
+            views: vec![diffuse_texture.create_view(&wgpu::TextureViewDescriptor::default())],
+            list: vec![diffuse_texture],
+        };
         Self {
             surface,
             renderdevice,
@@ -118,11 +135,11 @@ impl State {
             size,
             value_test: 0,
             diffuse_size: texture_size,
-            diffuse_texture: diffuse_texture,
             lasttime: std::time::SystemTime::now(),
             shaders,
             pipelines: SpinePipelinePoolSimple::default(),
             rendererpool: MeshRendererPool::default(),
+            textures,
         }
     }
 
@@ -188,10 +205,6 @@ impl State {
         self.clear(&mut encoder, &view);
         
         let format = wgpu::TextureFormat::Rgba8UnormSrgb;
-        let texture_view = self.diffuse_texture.create_view(
-            &wgpu::TextureViewDescriptor::default()
-        );
-
         let receive_w = self.size.width - 200 as u32;
         let receive_h = self.size.height - 200 as u32;
         let receive_width = self.size.width;
@@ -219,8 +232,35 @@ impl State {
                 wgpu::BlendFactor::OneMinusSrcAlpha,
                 ouput_format,
                 None,
+                None,
                 &mut self.shaders,
                 &mut self.pipelines,
+                &self.textures
+            );
+            self.rendererpool.insert(
+                &self.renderdevice,
+                &self.queue,
+                &[
+                    -0.5, -0.5,  1.0, 0., 0., 1.0,   0., 0.,
+                    -0.5,  0.5,  1.0, 0., 0., 1.0,   0., 1.,
+                     0.5,  0.5,  0.0, 0., 0., 1.0,   1., 1.,
+                     0.5, -0.5,  1.0, 0., 0., 1.0,   1., 0.,
+                ],
+                &[
+                    0, 1, 2,
+                    0, 2, 3
+                ],
+                EShader::ColoredTextured,
+                Matrix::identity(),
+                Vector4::new(0., 0., 0., 0.),
+                wgpu::BlendFactor::SrcAlpha,
+                wgpu::BlendFactor::OneMinusSrcAlpha,
+                ouput_format,
+                None,
+                Some(0),
+                &mut self.shaders,
+                &mut self.pipelines,
+                &self.textures
             );
             let mut renderpass = encoder.begin_render_pass(
                 &wgpu::RenderPassDescriptor {

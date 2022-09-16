@@ -196,7 +196,7 @@ impl SpinePipeline {
         let pipeline_layout = device.create_pipeline_layout(
             &wgpu::PipelineLayoutDescriptor {
                 label: None,
-                bind_group_layouts: &[&shader.bind_group_layouts],
+                bind_group_layouts: shader.bind_group_layouts().as_slice(),
                 push_constant_ranges: &[],
             }
         );

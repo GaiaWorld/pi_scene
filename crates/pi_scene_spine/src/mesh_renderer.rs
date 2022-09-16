@@ -1,4 +1,4 @@
-use pi_scene_material::{texture::TextureKey, material::{Material, UniformKindFloat4, UniformKindMat4}};
+use pi_scene_material::{texture::{TextureKey, TexturePool}, material::{Material, UniformKindFloat4, UniformKindMat4}};
 use pi_scene_math::{Number, Matrix, Vector4};
 use pi_scene_pipeline_key::pipeline_key::PipelineKey;
 use wgpu::DepthStencilState;
@@ -22,7 +22,7 @@ impl<K2D: TextureKey> MeshRenderer<K2D> {
             pipeline_key: None,
         }
     }
-    pub fn update<SP: SpineShaderPool, SPP: SpinePipelinePool>(
+    pub fn update<SP: SpineShaderPool, SPP: SpinePipelinePool, TP: TexturePool<K2D>>(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -35,12 +35,15 @@ impl<K2D: TextureKey> MeshRenderer<K2D> {
         dst_factor: wgpu::BlendFactor,
         target_format: wgpu::TextureFormat,
         depth_stencil: Option<DepthStencilState>,
+        texture_key: Option<K2D>,
         shaders: &mut SP,
         pipelines: &mut SPP,
+        textures: &TP,
     ) {
         self.mesh.init(device, shader, shaders);
         self.mesh.mvp_matrix(queue, mvp);
         self.mesh.mask_flag(queue, mask_flag);
+        self.mesh.texture(device, texture_key, shaders, textures);
         self.mesh.set_vertices(device, queue, vertices);
         self.mesh.set_indices(device, queue, indices);
         self.shader = shader;
@@ -99,7 +102,7 @@ impl<K2D: TextureKey> Default for  MeshRendererPool<K2D> {
 }
 
 impl<K2D: TextureKey>  MeshRendererPool<K2D> {
-    pub fn insert<SP: SpineShaderPool, SPP: SpinePipelinePool>(
+    pub fn insert<SP: SpineShaderPool, SPP: SpinePipelinePool, TP: TexturePool<K2D>>(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -112,8 +115,10 @@ impl<K2D: TextureKey>  MeshRendererPool<K2D> {
         dst_factor: wgpu::BlendFactor,
         target_format: wgpu::TextureFormat,
         depth_stencil: Option<DepthStencilState>,
+        texture_key: Option<K2D>,
         shaders: &mut SP,
         pipelines: &mut SPP,
+        textures: &TP,
     ) {
         self.counter += 1;
         if self.renderers.len() < self.counter {
@@ -121,7 +126,7 @@ impl<K2D: TextureKey>  MeshRendererPool<K2D> {
             self.renderers.push(renderer);
         }
 
-        self.renderers.get_mut(self.counter - 1).unwrap().update(device, queue, vertices, indices, shader, mvp, mask_flag, src_factor, dst_factor, target_format, depth_stencil, shaders, pipelines);
+        self.renderers.get_mut(self.counter - 1).unwrap().update(device, queue, vertices, indices, shader, mvp, mask_flag, src_factor, dst_factor, target_format, depth_stencil, texture_key, shaders, pipelines, textures);
     }
     pub fn reset(&mut self) {
         self.counter = 0;

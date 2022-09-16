@@ -1,5 +1,5 @@
 use pi_scene_geometry::{geometry::{Geometry, GeometryDataDesc}, TVertexDataKindKey, vertex_data::EVertexDataFormat};
-use pi_scene_material::{texture::TextureKey, material::{Material, UniformKindFloat4, UniformKindMat4}};
+use pi_scene_material::{texture::{TextureKey, TexturePool}, material::{Material, UniformKindFloat4, UniformKindMat4}};
 use pi_scene_math::Matrix;
 use wgpu::util::DeviceExt;
 
@@ -206,12 +206,7 @@ impl<K2D: TextureKey> Mesh<K2D> {
     }
 
     pub fn draw<'a>(&'a self, queue: &wgpu::Queue, renderpass: &mut wgpu::RenderPass<'a>) {
-        let bind_groups = self.material.bind_groups();
-        let mut index = 0;
-        bind_groups.iter().for_each(|bind| {
-            renderpass.set_bind_group(index, bind, &[]);
-            index += 1;
-        });
+        let bind_groups = self.material.bind_groups(renderpass);
         // println!(">>>>>>>>>>>>>>>> {} >>>>> {}", self.indices_length, self.vertices_length);
         renderpass.set_vertex_buffer(0, self.vertices_buffer.as_ref().unwrap().slice(..));
         renderpass.set_index_buffer(self.indices_buffer.as_ref().unwrap().slice(..), wgpu::IndexFormat::Uint16);
@@ -267,6 +262,21 @@ impl<K2D: TextureKey> Mesh<K2D> {
     ) {
         Material::<SpineVertexDataKindKey, SpineMaterialBlockKindKey, K2D>::mask_flag(&mut self.material, mask_flag);
         self.material.update_uniform(queue);
+    }
+    pub fn texture<TP: TexturePool<K2D>, SP: SpineShaderPool>(
+        &mut self,
+        device: &wgpu::Device,
+        key: Option<K2D>,
+        shaders: &SP,
+        textures: &TP,
+    ) {
+        match key {
+            Some(key) => {
+                Material::<SpineVertexDataKindKey, SpineMaterialBlockKindKey, K2D>::texture(device, &mut self.material, self.shader.unwrap(), shaders, key, textures);
+            },
+            None => {},
+        }
+        
     }
 }
 
