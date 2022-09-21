@@ -130,6 +130,7 @@ pub trait TBoundingInfoCalc {
     fn check_boundings_of_tree(
         &self,
         frustum_planes: &ConvexPolyhedron,
+        result: &mut Vec<BoundingKey>
     );
 }
 
@@ -192,6 +193,7 @@ impl TBoundingInfoCalc for VecBoundingInfoCalc {
     fn check_boundings_of_tree(
         &self,
         _frustum_planes: &ConvexPolyhedron,
+        _result: &mut Vec<BoundingKey>
     ){
         todo!()
     }

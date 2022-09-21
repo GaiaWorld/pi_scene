@@ -1,14 +1,10 @@
-use ncollide3d::{
-    bounding_volume::AABB,
-    na::Point3 as TreePoint3,
-};
+use ncollide3d::{bounding_volume::AABB, na::Point3 as TreePoint3};
 use parry3d::{
     na::{Isometry3, Point3},
     shape::{ConvexPolyhedron, Cuboid},
 };
 use pi_scene_math::{frustum::FrustumPlanes, Perspective3, Vector4};
 use pi_spatialtree::OctTree;
-
 
 use crate::cameras::camera::Camera;
 
@@ -66,7 +62,7 @@ impl TBoundingInfoCalc for BoundingTree {
         todo!()
     }
 
-    fn check_boundings_of_tree(&self, frustum: &ConvexPolyhedron) {
+    fn check_boundings_of_tree(&self, frustum: &ConvexPolyhedron, result: &mut Vec<BoundingKey>) {
         let aabb = frustum.local_aabb();
 
         let aabb = AABB::new(
@@ -77,6 +73,7 @@ impl TBoundingInfoCalc for BoundingTree {
         let mut args = AbQueryArgs::new(frustum.clone());
 
         self.0.query(&aabb, intersects, &mut args, ab_query_func);
+        *result = args.result
     }
 }
 
