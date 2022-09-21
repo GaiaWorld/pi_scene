@@ -18,7 +18,7 @@ pi_animation = { git = "https://github.com/GaiaWorld/pi_animation" }
 
 parry3d = "0.9.0"
 lazy_static = "1.4"
-pi_spatialtree = { path = "../../../pi_spatialtree" }
+pi_spatialtree = { git = "https://github.com/GaiaWorld/pi_spatialtree.git" }
 ncollide3d = "0.27.0"
 
 [patch."https://github.com/GaiaWorld/pi_animation"]
