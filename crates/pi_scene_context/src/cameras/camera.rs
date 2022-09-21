@@ -1,18 +1,19 @@
 use pi_scene_math::{vector::{ TMinimizeMaximize }, Vector3, Matrix, Vector4};
 
 
+// 初始方向为z轴正方向
 pub struct Camera {
-    up: Vector3,
-    fov: f32,
-    minz: f32,
-    maxz: f32,
+    pub up: Vector3,
+    pub fov: f32,
+    pub minz: f32,
+    pub maxz: f32,
     /// 
     /// * Define the default inertia of the camera.
     /// * This helps giving a smooth feeling to the camera movement.
-    inertia: f32,
-    viewport: Vector4,
-    view_matrix: Matrix,
-    project_matrix: Matrix,
+    pub inertia: f32,
+    pub viewport: Vector4,
+    pub view_matrix: Matrix,
+    pub project_matrix: Matrix,
 }
 
 impl Default for Camera {

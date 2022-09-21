@@ -5,7 +5,7 @@ pub struct BoundingBox {
     extend: Vector3,
     center_world: Vector3,
     extend_world: Vector3,
-    vectors_world: [Vector3; 8],
+    pub vectors_world: [Vector3; 8],
 }
 
 impl Default for BoundingBox {
