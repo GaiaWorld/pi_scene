@@ -1,13 +1,14 @@
+use parry3d::shape::ConvexPolyhedron;
 use pi_scene_math::{
     frustum::FrustumPlanes, plane::Plane, vector::TMinimizeMaximize, Matrix, Vector3,
 };
-use pi_slotmap::DefaultKey;
+use pi_slotmap::{DefaultKey, KeyData, Key};
 use std::hash;
 use self::{bounding_box::BoundingBox, bounding_sphere::BoundingSphere};
 
 pub mod bounding_box;
 pub mod bounding_sphere;
-
+pub mod oct_tree;
 /// 检测级别
 /// *
 pub enum ECullingStrategy {
@@ -27,7 +28,7 @@ pub trait TIntersect {
 pub struct BoundingInfo {
     minimum: Vector3,
     maximum: Vector3,
-    bounding_box: BoundingBox,
+    pub bounding_box: BoundingBox,
     bounding_sphere: BoundingSphere,
     direction0: Vector3,
     direction1: Vector3,
@@ -101,22 +102,35 @@ pub fn check_boundings(
     *result = res_vec;
 }
 
-pub trait TBoundingInfoKey: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + hash::Hash {}
-impl TBoundingInfoKey for DefaultKey {}
-impl TBoundingInfoKey for u8 {}
-impl TBoundingInfoKey for u16 {}
-impl TBoundingInfoKey for u32 {}
-impl TBoundingInfoKey for u64 {}
-impl TBoundingInfoKey for usize {}
-impl TBoundingInfoKey for u128 {}
+#[derive(Debug, Copy, Clone, Hash, Ord, PartialOrd, Eq, PartialEq, Default)]
+pub struct BoundingKey(pub(crate) usize);
 
-pub trait TBoundingInfoCalc<K: TBoundingInfoKey> {
-    fn add(&mut self, key: K, info: BoundingInfo);
-    fn remove(&mut self, key: K);
+unsafe impl Key for BoundingKey {
+    #[inline]
+    fn data(&self) -> KeyData {
+        KeyData::from_ffi(self.0 as u64)
+    }
+}
+
+impl From<KeyData> for BoundingKey {
+    #[inline]
+    fn from(data: KeyData) -> Self {
+        BoundingKey(data.as_ffi() as usize)
+    }
+}
+
+pub trait TBoundingInfoCalc {
+    fn add(&mut self, key: BoundingKey, info: BoundingInfo);
+    fn remove(&mut self, key: BoundingKey);
     fn check_boundings(
         &self,
         frustum_planes: &FrustumPlanes,
-        result: &mut Vec<K>
+        result: &mut Vec<BoundingKey>
+    );
+    fn check_boundings_of_tree(
+        &self,
+        frustum_planes: &ConvexPolyhedron,
+        result: &mut Vec<BoundingKey>
     );
 }
 
@@ -136,22 +150,22 @@ impl Default for VecBoundingInfoCalc {
     }
 }
 
-impl TBoundingInfoCalc<usize> for VecBoundingInfoCalc {
-    fn add(&mut self, key: usize, info: BoundingInfo) {
+impl TBoundingInfoCalc for VecBoundingInfoCalc {
+    fn add(&mut self, key: BoundingKey, info: BoundingInfo) {
         match self.recycle.pop() {
             Some(index) => {
                 self.list[index] = info;
-                self.record[index] = key;
+                self.record[index] = key.0;
             },
             None => {
                 self.list.push(info);
-                self.record.push(key);
+                self.record.push(key.0);
             },
         } 
     }
 
-    fn remove(&mut self, key: usize) {
-        match self.record.binary_search(&key) {
+    fn remove(&mut self, key: BoundingKey) {
+        match self.record.binary_search(&key.0) {
             Ok(index) => {
                 self.recycle.push(index);
             },
@@ -162,7 +176,7 @@ impl TBoundingInfoCalc<usize> for VecBoundingInfoCalc {
     fn check_boundings(
         &self, 
         frustum_planes: &FrustumPlanes,
-        result: &mut Vec<usize>
+        result: &mut Vec<BoundingKey>
     ) {
         let len = self.list.len();
         let mut res_vec = Vec::with_capacity(len);
@@ -170,10 +184,17 @@ impl TBoundingInfoCalc<usize> for VecBoundingInfoCalc {
             if !self.recycle.contains(&index) {
                 if self.list[index].is_in_frustum(frustum_planes) {
                     let key = self.record.get(index).unwrap();
-                    res_vec.push(*key);
+                    res_vec.push(BoundingKey(*key));
                 }
             }
         }
         *result = res_vec;
+    }
+    fn check_boundings_of_tree(
+        &self,
+        _frustum_planes: &ConvexPolyhedron,
+        _result: &mut Vec<BoundingKey>
+    ){
+        todo!()
     }
 }
