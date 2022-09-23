@@ -1,4 +1,4 @@
-use pi_scene_material::material::{MaterialTextureDesc, TMaterialBlockKindKey, MaterialUniformDesc, EUniformDataFormat};
+use pi_scene_material::{material::{MaterialTextureDesc, MaterialUniformDesc, EUniformDataFormat}};
 use pi_scene_pipeline_key::uniform_info::calc_uniform_size;
 
 use crate::material::SpineMaterialBlockKindKey;
@@ -21,7 +21,8 @@ pub struct SpineShader {
     pub attributes_bytes: u16,
     pub attributes_instanced: Vec<wgpu::VertexAttribute>,
     pub attributes_instanced_bytes: u16,
-    pub bind_group_layouts: Vec<wgpu::BindGroupLayout>,
+    pub uniform_bind_group_layout: wgpu::BindGroupLayout,
+    pub texture_bind_group_layout: Option<wgpu::BindGroupLayout>,
     pub textures: Vec<MaterialTextureDesc<SpineMaterialBlockKindKey>>,
     pub uniform_bytes: wgpu::BufferAddress,
 }
@@ -72,7 +73,7 @@ impl SpineShader {
                 ],
             }
         );
-        let shader = Self::load(device, include_str!("./colored.vert"), include_str!("./colored.frag"), "ColoredVS", "ColoredFS", attributes, attributes_bytes, attributes_instanced, attributes_instanced_bytes, uniform_layout, uniform_bytes, vec![], vec![]);
+        let shader = Self::load(device, include_str!("./colored.vert"), include_str!("./colored.frag"), "ColoredVS", "ColoredFS", attributes, attributes_bytes, attributes_instanced, attributes_instanced_bytes, uniform_layout, uniform_bytes, vec![], None);
         pool.record_spine_shader_colored(shader);
 
         
@@ -96,7 +97,7 @@ impl SpineShader {
             },
         ];
         let attributes_instanced = vec![];
-        let uniform_bytes = calc_uniform_size(device, (16 + 4) * std::mem::size_of::<f32>() as u64) as wgpu::BufferAddress;
+        let uniform_bytes = calc_uniform_size(device, (16 + 4 + 2 + 2) * std::mem::size_of::<f32>() as u64) as wgpu::BufferAddress;
         let uniform_layout = device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
                 label: None,
@@ -117,34 +118,32 @@ impl SpineShader {
             }
         );
         let textures = vec![
-            MaterialTextureDesc { kind: SpineMaterialBlockKindKey::Texture, set: 1, bind: 1, bind_sampler: Some(0) }
+            MaterialTextureDesc { kind: SpineMaterialBlockKindKey::Texture, bind: 1, bind_sampler: 0 }
         ];
-        let texture_layouts = vec![
-            device.create_bind_group_layout(
-                &wgpu::BindGroupLayoutDescriptor {
-                    label: None,
-                    entries: &[
-                        wgpu::BindGroupLayoutEntry {
-                            binding: 0,
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                            count: None,
+        let texture_layout = Some(device.create_bind_group_layout(
+            &wgpu::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
                         },
-                        wgpu::BindGroupLayoutEntry {
-                            binding: 1,
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Texture {
-                                sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                                view_dimension: wgpu::TextureViewDimension::D2,
-                                multisampled: false,
-                            },
-                            count: None,
-                        }
-                    ],
-                }
-            )
-        ];
-        let shader = Self::load(device, include_str!("./colored_textured.vert"), include_str!("./colored_textured.frag"), "ColoredTexturedVS", "ColoredTexturedFS", attributes, attributes_bytes, attributes_instanced, attributes_instanced_bytes, uniform_layout, uniform_bytes, textures, texture_layouts);
+                        count: None,
+                    }
+                ],
+            }
+        ));
+        let shader = Self::load(device, include_str!("./colored_textured.vert"), include_str!("./colored_textured.frag"), "ColoredTexturedVS", "ColoredTexturedFS", attributes, attributes_bytes, attributes_instanced, attributes_instanced_bytes, uniform_layout, uniform_bytes, textures, texture_layout);
         pool.record_spine_shader_colored_textured(shader);
 
         
@@ -173,7 +172,7 @@ impl SpineShader {
             },
         ];
         let attributes_instanced = vec![];
-        let uniform_bytes = calc_uniform_size(device, (16 + 4) * std::mem::size_of::<f32>() as u64) as wgpu::BufferAddress;
+        let uniform_bytes = calc_uniform_size(device, (16 + 4 + 2 + 2) * std::mem::size_of::<f32>() as u64) as wgpu::BufferAddress;
         let uniform_layout = device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
                 label: None,
@@ -194,34 +193,32 @@ impl SpineShader {
             }
         );
         let textures = vec![
-            MaterialTextureDesc { kind: SpineMaterialBlockKindKey::Texture, set: 1, bind: 1, bind_sampler: Some(0) }
+            MaterialTextureDesc { kind: SpineMaterialBlockKindKey::Texture, bind: 1, bind_sampler: 0 }
         ];
-        let texture_layouts = vec![
-            device.create_bind_group_layout(
-                &wgpu::BindGroupLayoutDescriptor {
-                    label: None,
-                    entries: &[
-                        wgpu::BindGroupLayoutEntry {
-                            binding: 0,
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                            count: None,
+        let texture_layout = Some(device.create_bind_group_layout(
+            &wgpu::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
                         },
-                        wgpu::BindGroupLayoutEntry {
-                            binding: 1,
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Texture {
-                                sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                                view_dimension: wgpu::TextureViewDimension::D2,
-                                multisampled: false,
-                            },
-                            count: None,
-                        }
-                    ],
-                }
-            )
-        ];
-        let shader = Self::load(device, include_str!("./two_colored_textured.vert"), include_str!("./two_colored_textured.frag"), "TwoColoredTexturedVS", "TwoColoredTexturedFS", attributes, attributes_bytes, attributes_instanced, attributes_instanced_bytes, uniform_layout, uniform_bytes, textures, texture_layouts);
+                        count: None,
+                    }
+                ],
+            }
+        ));
+        let shader = Self::load(device, include_str!("./two_colored_textured.vert"), include_str!("./two_colored_textured.frag"), "TwoColoredTexturedVS", "TwoColoredTexturedFS", attributes, attributes_bytes, attributes_instanced, attributes_instanced_bytes, uniform_layout, uniform_bytes, textures, texture_layout);
         pool.record_spine_shader_colored_textured_two(shader);
     }
     fn load(
@@ -237,7 +234,7 @@ impl SpineShader {
         uniform_layout: wgpu::BindGroupLayout,
         uniform_bytes: wgpu::BufferAddress,
         textures: Vec<MaterialTextureDesc<SpineMaterialBlockKindKey>>,
-        mut texture_layouts: Vec<wgpu::BindGroupLayout>,
+        texture_layout: Option<wgpu::BindGroupLayout>,
     ) -> SpineShader {
         let vs_module = device.create_shader_module(
             &wgpu::ShaderModuleDescriptor {
@@ -261,8 +258,6 @@ impl SpineShader {
             }
         );
 
-        texture_layouts.insert(0, uniform_layout);
-
         SpineShader {
             vs_module,
             fs_module,
@@ -270,34 +265,34 @@ impl SpineShader {
             attributes_bytes,
             attributes_instanced,
             attributes_instanced_bytes,
-            bind_group_layouts: texture_layouts,
+            texture_bind_group_layout: texture_layout,
+            uniform_bind_group_layout: uniform_layout,
             uniform_bytes,
             textures,
         }
     }
     pub fn get_texture_layout(
         &self,
-        desc: &MaterialTextureDesc<SpineMaterialBlockKindKey>,
     ) -> Option<&wgpu::BindGroupLayout> {
-        match self.textures.binary_search(desc) {
-            Ok(index) => {
-                self.bind_group_layouts.get(index + 1)
-            },
-            Err(_) => None,
-        }
+        self.texture_bind_group_layout.as_ref()
     }
     pub fn get_uniform_layout(
         &self,
     ) -> &wgpu::BindGroupLayout {
-        self.bind_group_layouts.get(0).unwrap()
+        &self.uniform_bind_group_layout
     }
     pub fn bind_group_layouts(
         &self,
     ) -> Vec<&wgpu::BindGroupLayout> {
         let mut result = vec![];
-        self.bind_group_layouts.iter().for_each(|v| { 
-            result.push(v)
-        });
+
+        result.push(&self.uniform_bind_group_layout);
+
+        match self.texture_bind_group_layout.as_ref() {
+            Some(layout) => result.push(layout),
+            None => {},
+        }
+
         result
     }
 }

@@ -1,19 +1,20 @@
-use pi_scene_material::{texture::{TextureKey, TexturePool}, material::{Material, UniformKindFloat4, UniformKindMat4}};
-use pi_scene_math::{Number, Matrix, Vector4};
+use pi_scene_data_container::{TextureID, TexturePool};
+use pi_scene_material::{material::{UniformKindFloat4, UniformKindMat4}};
+use pi_scene_math::{Number};
 use pi_scene_pipeline_key::pipeline_key::PipelineKey;
 use wgpu::DepthStencilState;
 
 use crate::{mesh::Mesh, shaders::{EShader, SpineShaderPool}, pipeline::{SpinePipelinePool, SpinePipeline}};
 
 
-pub struct  MeshRenderer<K2D: TextureKey> {
-    mesh: Mesh<K2D>,
+pub struct  MeshRenderer<TID: TextureID> {
+    mesh: Mesh<TID>,
     blend: Option<wgpu::BlendState>,
     shader: EShader,
     pipeline_key: Option<PipelineKey>,
 }
 
-impl<K2D: TextureKey> MeshRenderer<K2D> {
+impl<TID: TextureID> MeshRenderer<TID> {
     pub fn new() -> Self {
         Self {
             mesh: Mesh::new(),
@@ -22,7 +23,7 @@ impl<K2D: TextureKey> MeshRenderer<K2D> {
             pipeline_key: None,
         }
     }
-    pub fn update<SP: SpineShaderPool, SPP: SpinePipelinePool, TP: TexturePool<K2D>>(
+    pub fn update<SP: SpineShaderPool, SPP: SpinePipelinePool, TP: TexturePool<TID>>(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -35,7 +36,7 @@ impl<K2D: TextureKey> MeshRenderer<K2D> {
         dst_factor: wgpu::BlendFactor,
         target_format: wgpu::TextureFormat,
         depth_stencil: Option<DepthStencilState>,
-        texture_key: Option<K2D>,
+        texture_key: Option<TID>,
         shaders: &mut SP,
         pipelines: &mut SPP,
         textures: &TP,
@@ -66,11 +67,14 @@ impl<K2D: TextureKey> MeshRenderer<K2D> {
         ];
         self.pipeline_key = Some(SpinePipeline::check(shader, device, shaders, pipelines, &targets, wgpu::PrimitiveState::default(), depth_stencil));
     }
-    pub fn draw<'a, SPP: SpinePipelinePool>(
+    pub fn draw<'a, SPP: SpinePipelinePool, SP: SpineShaderPool, TP: TexturePool<TID>>(
         &'a self,
+        device: &wgpu::Device,
         queue: &wgpu::Queue,
         renderpass: &mut wgpu::RenderPass<'a>,
         pipelines: &'a SPP,
+        shaders: &'a SP,
+        textures: &'a TP,
     ) {
         match self.pipeline_key {
             Some(key) => {
@@ -78,7 +82,7 @@ impl<K2D: TextureKey> MeshRenderer<K2D> {
                 match SpinePipeline::get(self.shader, pipelines, key) {
                     Some(pipeline) => {
                         renderpass.set_pipeline(&pipeline.pipeline);
-                        self.mesh.draw(queue, renderpass);
+                        self.mesh.draw(device, queue, renderpass, shaders, textures);
                     },
                     None => {},
                 }
@@ -88,21 +92,30 @@ impl<K2D: TextureKey> MeshRenderer<K2D> {
             },
         }
     }
+    pub fn update_uniform<'a, SP: SpineShaderPool, TP: TexturePool<TID>>(
+        &'a mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        shaders: &'a SP,
+        textures: &'a TP,
+    ) {
+        self.mesh.update_uniform(device, queue, shaders, textures);
+    }
 }
 
-pub struct MeshRendererPool<K2D: TextureKey> {
-    renderers: Vec<MeshRenderer<K2D>>,
+pub struct MeshRendererPool<TID: TextureID> {
+    renderers: Vec<MeshRenderer<TID>>,
     counter: usize,
 }
 
-impl<K2D: TextureKey> Default for  MeshRendererPool<K2D> {
+impl<TID: TextureID> Default for  MeshRendererPool<TID> {
     fn default() -> Self {
         Self { renderers: vec![], counter: 0 }
     }
 }
 
-impl<K2D: TextureKey>  MeshRendererPool<K2D> {
-    pub fn insert<SP: SpineShaderPool, SPP: SpinePipelinePool, TP: TexturePool<K2D>>(
+impl<TID: TextureID>  MeshRendererPool<TID> {
+    pub fn insert<SP: SpineShaderPool, SPP: SpinePipelinePool, TP: TexturePool<TID>>(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -115,7 +128,7 @@ impl<K2D: TextureKey>  MeshRendererPool<K2D> {
         dst_factor: wgpu::BlendFactor,
         target_format: wgpu::TextureFormat,
         depth_stencil: Option<DepthStencilState>,
-        texture_key: Option<K2D>,
+        texture_key: Option<TID>,
         shaders: &mut SP,
         pipelines: &mut SPP,
         textures: &TP,
@@ -131,15 +144,33 @@ impl<K2D: TextureKey>  MeshRendererPool<K2D> {
     pub fn reset(&mut self) {
         self.counter = 0;
     }
-    pub fn draw<'a, SPP: SpinePipelinePool>(
+    pub fn draw<'a, SP: SpineShaderPool, SPP: SpinePipelinePool, TP: TexturePool<TID>>(
         &'a self,
+        device: &wgpu::Device,
         queue: &wgpu::Queue,
         renderpass: &mut wgpu::RenderPass<'a>,
         pipelines: &'a SPP,
+        shaders: &'a SP,
+        textures: &'a TP,
     ) {
         for i in 0.. self.counter {
             let renderer = self.renderers.get(i).unwrap();
-            renderer.draw(queue, renderpass, pipelines);
+            renderer.draw(device, queue, renderpass, pipelines, shaders, textures);
+        }
+    }
+    
+    pub fn update_uniforms<'a, SP: SpineShaderPool, TP: TexturePool<TID>>(
+        &'a mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        shaders: &'a SP,
+        textures: &'a TP,
+    ) {
+        for i in 0.. self.counter {
+            match self.renderers.get_mut(i) {
+                Some(renderer) => renderer.update_uniform(device, queue, shaders, textures),
+                None => {},
+            };
         }
     }
 }

@@ -1,20 +1,20 @@
-use pi_scene_material::texture::TextureKey;
+use pi_scene_data_container::TextureID;
 use pi_scene_math::{Number, Matrix};
 use pi_scene_pipeline_key::pipeline_key::PipelineKey;
 
 use crate::{shaders::{EShader, SpineShaderPool}, mesh::{Mesh, VertexAttribute}, pipeline::{SpinePipelinePool, SpinePipeline}};
 
 
-pub struct ShapeRenderer<K2D: TextureKey> {
+pub struct ShapeRenderer<TID: TextureID> {
     pub src_factor: wgpu::BlendFactor,
     pub dst_factor: wgpu::BlendFactor,
     pub shader: EShader,
-    pub meshes: Vec<Mesh<K2D>>,
+    pub meshes: Vec<Mesh<TID>>,
     pub is_drawing: bool,
     pub draw_calls: usize,
     pub vertices_length: usize,
     pub indices_length: usize,
-    pub last_texture_key: Option<K2D>,
+    pub last_texture_key: Option<TID>,
     pub attributes: Vec<VertexAttribute>,
     pub mask_flag: (Number, Number, Number, Number),
     pub mvp_matrix: Matrix,
@@ -24,7 +24,7 @@ pub struct ShapeRenderer<K2D: TextureKey> {
     vertex_index: usize,
 }
 
-impl<K2D: TextureKey> ShapeRenderer<K2D> {
+impl<TID: TextureID> ShapeRenderer<TID> {
     pub fn new() -> Self {
         let attributes  = vec![
             VertexAttribute::position_2(),

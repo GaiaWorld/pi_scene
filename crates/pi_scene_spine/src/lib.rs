@@ -1,4 +1,4 @@
-use shaders::{EShader, colored::ColoredShader, colored_textured::ColoredTexturedShader, two_colored_textured::TwoColoredTexturedShader, SpineShaderPool, SpineShader};
+use shaders::{SpineShaderPool};
 
 
 pub mod error;
@@ -9,7 +9,6 @@ pub mod polygon_batcher;
 pub mod mesh_renderer;
 pub mod pipeline;
 pub mod material;
-pub mod scene_renderer;
 
 pub const MAX_VERTICES: u16 = 10920;
 

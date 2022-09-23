@@ -1,12 +1,12 @@
-use std::sync::Arc;
 
-use pi_scene_geometry::{geometry::Geometry, TVertexDataKindKey};
-use pi_scene_material::{material::{Material, TMaterialBlockKindKey}, texture::TextureKey};
+use pi_scene_geometry::{geometry::Geometry, };
+use pi_scene_data_container::{TMaterialBlockKindKey, TextureID, TVertexBufferKindKey, TGeometryBufferID, };
+use pi_scene_material::material::Material;
 use pi_scene_math::Matrix;
 
 
-pub struct Mesh<K: TVertexDataKindKey, K0: TMaterialBlockKindKey, K2D: TextureKey> {
-    pub geometry: Vec<Geometry<K>>,
-    pub material: Vec<Material<K, K0, K2D>>,
+pub struct Mesh<VBK: TVertexBufferKindKey, MBKK: TMaterialBlockKindKey, GBID: TGeometryBufferID, TID: TextureID> {
+    pub geometry: Vec<Geometry<VBK, GBID>>,
+    pub material: Vec<Material<VBK, MBKK, TID>>,
     pub render_matrix: Matrix,
 }

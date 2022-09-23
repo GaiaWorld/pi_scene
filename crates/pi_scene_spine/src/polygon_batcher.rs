@@ -1,22 +1,21 @@
-use pi_scene_geometry::vertex_data::EVertexDataFormat;
-use pi_scene_material::texture::TextureKey;
+use pi_scene_data_container::{TextureID, TexturePool};
 use pi_scene_math::{Number, Matrix};
 use pi_scene_pipeline_key::pipeline_key::PipelineKey;
 
-use crate::{mesh::{Mesh, VertexAttribute, EVertexAttribute}, vec_set, shaders::{EShader, SpineShaderPool}, MAX_VERTICES, pipeline::{SpinePipelinePool, SpinePipeline}};
+use crate::{mesh::{Mesh, VertexAttribute}, vec_set, shaders::{EShader, SpineShaderPool}, MAX_VERTICES, pipeline::{SpinePipelinePool, SpinePipeline}};
 
 
-pub struct PolygonBatcher<K2D: TextureKey> {
+pub struct PolygonBatcher<TID: TextureID> {
     pub src_factor: wgpu::BlendFactor,
     pub dst_factor: wgpu::BlendFactor,
     pub blend: Option<wgpu::BlendState>,
     pub shader: EShader,
-    pub meshes: Vec<Mesh<K2D>>,
+    pub meshes: Vec<Mesh<TID>>,
     pub is_drawing: bool,
     pub draw_calls: usize,
     pub vertices_length: usize,
     pub indices_length: usize,
-    pub last_texture_key: Option<K2D>,
+    pub last_texture_key: Option<TID>,
     pub attributes: Vec<VertexAttribute>,
     pub mask_flag: (Number, Number, Number, Number),
     pub color: (Number, Number, Number, Number),
@@ -25,7 +24,7 @@ pub struct PolygonBatcher<K2D: TextureKey> {
     pub pipeline_key: Option<PipelineKey>,
 }
 
-impl<K2D: TextureKey> PolygonBatcher<K2D> {
+impl<TID: TextureID> PolygonBatcher<TID> {
     pub fn new(
         two_color_tint: bool, 
     ) -> Self {
@@ -104,9 +103,9 @@ impl<K2D: TextureKey> PolygonBatcher<K2D> {
         );
         self.blend = blend;
     }
-    pub fn draw<'a, SP: SpineShaderPool>(
+    pub fn draw<'a, SP: SpineShaderPool, TP: TexturePool<TID>>(
         &'a mut self,
-        texture_key: Option<K2D>,
+        texture_key: Option<TID>,
         texture_pool: &wgpu::TextureView,
         vertices: &[f32],
         indices: &[u16],
@@ -114,6 +113,7 @@ impl<K2D: TextureKey> PolygonBatcher<K2D> {
         queue: &wgpu::Queue,
         renderpass: &mut wgpu::RenderPass<'a>,
         shaders: &mut SP,
+        textures: &TP,
     ) {
         let temp_vertices_length = vertices.len();
         let temp_indices_length = indices.len();
@@ -125,19 +125,19 @@ impl<K2D: TextureKey> PolygonBatcher<K2D> {
 
         if texture_key != last_texture_key {
             self.last_texture_key = texture_key;
-            self.flush(device, queue, renderpass, shaders);
+            self.flush(device, queue, renderpass, shaders, textures);
         } else {
             if vertices_length + temp_vertices_length > MAX_VERTICES as usize * self.elements_per_vertex as usize
                 || indices_length + temp_indices_length > MAX_VERTICES as usize * 3
             {
-                self.flush(device, queue, renderpass, shaders);
+                self.flush(device, queue, renderpass, shaders, textures);
             } else {
                 let mesh = self.meshes.get_mut(self.draw_calls).unwrap();
                 vec_set(mesh.get_vertices_mut(), vertices, 0);
             }
         }
     }
-    fn flush<'a, SP: SpineShaderPool>(&'a mut self, device: &wgpu::Device, queue: &wgpu::Queue, renderpass: &mut wgpu::RenderPass<'a>, shaders: &mut SP) {
+    fn flush<'a, SP: SpineShaderPool, TP: TexturePool<TID>>(&'a mut self, device: &wgpu::Device, queue: &wgpu::Queue, renderpass: &mut wgpu::RenderPass<'a>, shaders: &SP, textures: &TP) {
         if self.vertices_length == 0 {
             // self.meshes.get_mut(self.draw_calls).unwrap()
         } else {
@@ -153,13 +153,16 @@ impl<K2D: TextureKey> PolygonBatcher<K2D> {
             }
 
             let mesh = self.meshes.get_mut(self.draw_calls - 1).unwrap();
-            mesh.draw(queue, renderpass);
+            mesh.draw(device, queue, renderpass, shaders, textures);
         }
     }
-    pub fn end<'a>(
+    pub fn end<'a, SP: SpineShaderPool, TP: TexturePool<TID>>(
         &'a mut self,
+        device: &wgpu::Device,
         queue: &wgpu::Queue,
         renderpass: &mut wgpu::RenderPass<'a>,
+        shaders: &SP,
+        textures: &TP,
     ) {
         let shader = self.shader;
         let last_texture_key = self.last_texture_key;
@@ -173,7 +176,7 @@ impl<K2D: TextureKey> PolygonBatcher<K2D> {
                 self.vertices_length = 0;
                 self.indices_length = 0;
                 let mesh = self.meshes.get_mut(self.draw_calls).unwrap();
-                mesh.draw(queue, renderpass);
+                mesh.draw(device, queue, renderpass, shaders, textures);
             }
         }
     }

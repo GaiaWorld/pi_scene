@@ -12,6 +12,7 @@ keywords = ["scene control"]
 approx = "0.5"
 pi_slotmap = "0.1"
 pi_scene_math = { path = "../pi_scene_math" }
+pi_scene_data_container = { path = "../pi_scene_data_container" }
 pi_scene_geometry = { path = "../pi_scene_geometry" }
 pi_scene_material = { path = "../pi_scene_material" }
 pi_animation = { git = "https://github.com/GaiaWorld/pi_animation" }

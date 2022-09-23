@@ -105,7 +105,7 @@ impl SpinePipeline {
             Some(_) => {},
             None => {
                 let shader = shader_pool.get_spine_shader_colored();
-                let pipeline = Self::create(device, shader, pipelines, targets, primitive, depth_stencil);
+                let pipeline = Self::create(device, shader, targets, primitive, depth_stencil);
                 pipelines.record_spine_pipeline_colored(key, pipeline);
             },
         }
@@ -132,7 +132,7 @@ impl SpinePipeline {
             Some(_) => {},
             None => {
                 let shader = shader_pool.get_spine_shader_colored_textured();
-                let pipeline = Self::create(device, shader, pipelines, targets, primitive, depth_stencil);
+                let pipeline = Self::create(device, shader, targets, primitive, depth_stencil);
                 pipelines.record_spine_pipeline_colored_textured(key, pipeline);
             },
         }
@@ -159,7 +159,7 @@ impl SpinePipeline {
             Some(_) => {},
             None => {
                 let shader = shader_pool.get_spine_shader_colored_textured_two();
-                let pipeline = Self::create(device, shader, pipelines, targets, primitive, depth_stencil);
+                let pipeline = Self::create(device, shader, targets, primitive, depth_stencil);
                 pipelines.record_spine_pipeline_colored_textured_two(key, pipeline);
             },
         }
@@ -167,10 +167,9 @@ impl SpinePipeline {
         key
     }
 
-    fn create<'a, P: SpinePipelinePool>(
+    fn create(
         device: &wgpu::Device,
-        shader: &'a SpineShader,
-        pipelines: &'a mut P,
+        shader: & SpineShader,
         targets: &[wgpu::ColorTargetState],
         primitive: wgpu::PrimitiveState,
         depth_stencil: Option<wgpu::DepthStencilState>,

@@ -10,6 +10,7 @@ layout(location = 0) out vec4 gl_FragColor;
 layout(set = 0, binding = 0) uniform Param {
     mat4 u_projTrans;
     vec4 u_maskflag;
+    vec2 u_visibility;
 };
 
 layout(set = 1, binding = 0) uniform sampler sampler_u_texture;
@@ -57,5 +58,8 @@ void main() {
             c.rgb *= 1.0 + hsvValue.b;
         }
         gl_FragColor = c;
+
+        gl_FragColor.rgb *= u_visibility.x;
+        gl_FragColor.rgb *= mix(1.0, gl_FragColor.a, u_visibility.y);
     }
 }

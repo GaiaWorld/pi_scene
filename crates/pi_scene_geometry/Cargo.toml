@@ -9,8 +9,12 @@ license = "MIT OR Apache-2.0"
 keywords = ["Scene Geometry"]
 
 [dependencies]
+wgpu = { version = "0.12", features = ["spirv", "glsl"] }
+bytemuck = { version = "1.4", features = ["derive"] }
 nalgebra = "0.30"
 pi_share = "0.4"
+pi_slotmap = "0.1"
+pi_scene_data_container = { path = "../pi_scene_data_container" }
 pi_scene_math = { path = "../pi_scene_math" }
 
 [patch."https://github.com/GaiaWorld/pi_share.git"]

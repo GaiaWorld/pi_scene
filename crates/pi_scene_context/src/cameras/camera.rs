@@ -3,7 +3,6 @@ use pi_scene_math::{vector::{ TMinimizeMaximize }, Vector3, Matrix, Vector4};
 
 pub struct Camera {
     up: Vector3,
-    fov: f32,
     minz: f32,
     maxz: f32,
     /// 
@@ -19,7 +18,6 @@ impl Default for Camera {
     fn default() -> Self {
         Self {
             up: Vector3::new(0., 1., 0.),
-            fov: 0.75,
             minz: 0.1,
             maxz: 1000.,
             inertia: 0.7,

@@ -3,7 +3,7 @@ use std::{num::NonZeroU32, time::SystemTime, sync::Arc};
 
 use image::{GenericImageView};
 use pi_render::{components::view::target_alloc::{SafeAtlasAllocator, ShareTargetView}, rhi::{device::RenderDevice, asset::{RenderRes, }, }};
-use pi_scene_material::texture::TexturePool;
+use pi_scene_data_container::TexturePool;
 use pi_scene_math::{Matrix, Vector4};
 use pi_scene_spine::{SpineShaderPoolSimple, pipeline::{SpinePipelinePool, SpinePipelinePoolSimple}, mesh_renderer::MeshRendererPool, shaders::EShader};
 use winit::{window::Window, event::WindowEvent};
@@ -287,7 +287,8 @@ impl State {
                 0.,
                 1.
             );
-            self.rendererpool.draw(&self.queue, &mut renderpass, &self.pipelines);
+            self.rendererpool.update_uniforms(&self.renderdevice, &self.queue,  &self.shaders, &self.textures);
+            self.rendererpool.draw(&self.renderdevice, &self.queue, &mut renderpass, &self.pipelines, &self.shaders, &self.textures);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));

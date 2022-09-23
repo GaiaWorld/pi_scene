@@ -1,9 +1,9 @@
-use pi_scene_geometry::{geometry::{Geometry, GeometryDataDesc}, TVertexDataKindKey, vertex_data::EVertexDataFormat};
-use pi_scene_material::{texture::{TextureKey, TexturePool}, material::{Material, UniformKindFloat4, UniformKindMat4}};
-use pi_scene_math::Matrix;
+use pi_scene_data_container::{TextureID, TVertexBufferKindKey, TexturePool};
+use pi_scene_geometry::{vertex_data::EVertexDataFormat};
+use pi_scene_material::{material::{Material, UniformKindFloat4, UniformKindMat4}};
 use wgpu::util::DeviceExt;
 
-use crate::{MAX_VERTICES, error::ESpineError, vec_set, pipeline::SpinePipelinePool, material::{TSpineMaterialUpdate, SpineMaterialColored, SpineMaterialBlockKindKey, SpineVertexDataKindKey, SpineMaterialColoredTextured, SpineMaterialColoredTexturedTwo}, shaders::{EShader, SpineShaderPool}};
+use crate::{MAX_VERTICES, error::ESpineError, vec_set, pipeline::SpinePipelinePool, material::{TSpineMaterialUpdate, SpineMaterialColored, SpineMaterialBlockKindKey, SpineVertexBufferKindKey, SpineMaterialColoredTextured, SpineMaterialColoredTexturedTwo}, shaders::{EShader, SpineShaderPool}};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum EMeshKind {
@@ -11,11 +11,11 @@ pub enum EMeshKind {
     Indices,
 }
 
-impl TVertexDataKindKey for EMeshKind {}
+impl TVertexBufferKindKey for EMeshKind {}
 
-pub struct Mesh<K2D: TextureKey> {
+pub struct Mesh<TID: TextureID> {
     shader: Option<EShader>,
-    material: Material<SpineVertexDataKindKey, SpineMaterialBlockKindKey, K2D>,
+    material: Material<SpineVertexBufferKindKey, SpineMaterialBlockKindKey, TID>,
     vertices: Vec<f32>,
     indices: Vec<u16>,
     attributes: Vec<VertexAttribute>,
@@ -30,7 +30,7 @@ pub struct Mesh<K2D: TextureKey> {
     element_per_vertex: u32,
 }
 
-impl<K2D: TextureKey> Mesh<K2D> {
+impl<TID: TextureID> Mesh<TID> {
     pub fn new() -> Self {
         Self {
             shader: None,
@@ -205,7 +205,7 @@ impl<K2D: TextureKey> Mesh<K2D> {
         }
     }
 
-    pub fn draw<'a>(&'a self, queue: &wgpu::Queue, renderpass: &mut wgpu::RenderPass<'a>) {
+    pub fn draw<'a, SP: SpineShaderPool, TP: TexturePool<TID>>(&'a self, device: &wgpu::Device, queue: &wgpu::Queue, renderpass: &mut wgpu::RenderPass<'a>, shaders: &SP, textures: &TP) {
         let bind_groups = self.material.bind_groups(renderpass);
         // println!(">>>>>>>>>>>>>>>> {} >>>>> {}", self.indices_length, self.vertices_length);
         renderpass.set_vertex_buffer(0, self.vertices_buffer.as_ref().unwrap().slice(..));
@@ -230,7 +230,7 @@ impl<K2D: TextureKey> Mesh<K2D> {
     }
 
     pub fn init_material<SP: SpineShaderPool>(
-        mat: &mut Material<SpineVertexDataKindKey, SpineMaterialBlockKindKey, K2D>,
+        mat: &mut Material<SpineVertexBufferKindKey, SpineMaterialBlockKindKey, TID>,
         device: &wgpu::Device,
         shader: EShader,
         shader_pool: &SP
@@ -247,32 +247,44 @@ impl<K2D: TextureKey> Mesh<K2D> {
             },
         }
     }
+    pub fn update_uniform<TP: TexturePool<TID>, SP: SpineShaderPool>(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        shaders: &SP,
+        textures: &TP,
+    ) {
+        let texture_layout = match self.shader.unwrap() {
+            EShader::Colored => shaders.get_spine_shader_colored().get_texture_layout(),
+            EShader::ColoredTextured => shaders.get_spine_shader_colored_textured().get_texture_layout(),
+            EShader::TwoColoredTextured => shaders.get_spine_shader_colored_textured_two().get_texture_layout(),
+        };
+        Material::<SpineVertexBufferKindKey, SpineMaterialBlockKindKey, TID>::update_uniform(&mut self.material, device, queue, texture_layout, textures);
+    }
     pub fn mvp_matrix(
         &mut self,
         queue: &wgpu::Queue,
         mvp: UniformKindMat4,
     ) {
-        Material::<SpineVertexDataKindKey, SpineMaterialBlockKindKey, K2D>::mvp_matrix(&mut self.material, mvp);
-        self.material.update_uniform(queue);
+        Material::<SpineVertexBufferKindKey, SpineMaterialBlockKindKey, TID>::mvp_matrix(&mut self.material, mvp);
     }
     pub fn mask_flag(
         &mut self,
         queue: &wgpu::Queue,
         mask_flag: UniformKindFloat4,
     ) {
-        Material::<SpineVertexDataKindKey, SpineMaterialBlockKindKey, K2D>::mask_flag(&mut self.material, mask_flag);
-        self.material.update_uniform(queue);
+        Material::<SpineVertexBufferKindKey, SpineMaterialBlockKindKey, TID>::mask_flag(&mut self.material, mask_flag);
     }
-    pub fn texture<TP: TexturePool<K2D>, SP: SpineShaderPool>(
+    pub fn texture<TP: TexturePool<TID>, SP: SpineShaderPool>(
         &mut self,
         device: &wgpu::Device,
-        key: Option<K2D>,
+        key: Option<TID>,
         shaders: &SP,
         textures: &TP,
     ) {
         match key {
             Some(key) => {
-                Material::<SpineVertexDataKindKey, SpineMaterialBlockKindKey, K2D>::texture(device, &mut self.material, self.shader.unwrap(), shaders, key, textures);
+                Material::<SpineVertexBufferKindKey, SpineMaterialBlockKindKey, TID>::texture(device, &mut self.material, self.shader.unwrap(), shaders, key, textures);
             },
             None => {},
         }

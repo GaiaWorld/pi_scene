@@ -16,6 +16,7 @@ pi_animation = { git = "https://github.com/GaiaWorld/pi_animation" }
 pi_scene_geometry = { path = "../pi_scene_geometry" }
 pi_scene_material = { path = "../pi_scene_material" }
 pi_scene_pipeline_key = { path = "../pi_scene_pipeline_key" }
+pi_scene_data_container = { path = "../pi_scene_data_container" }
 
 [patch."https://github.com/GaiaWorld/pi_render"]
 pi_render = { path = "../../../pi_render" }

@@ -1,6 +1,9 @@
 use std::{sync::Arc, borrow::BorrowMut};
 
+use bytemuck::Pod;
+use pi_scene_data_container::{TVertexBufferKindKey, TGeometryBufferID};
 use pi_share::Share;
+use wgpu::util::DeviceExt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum EVertexDataFormat {
@@ -40,55 +43,43 @@ pub enum EVertexDataKind {
     UV16,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct VertexAttributeDesc<VDK: TVertexBufferKindKey> {
+    kind: VDK,
+    location: usize,
+}
+
 #[derive(Debug, Clone)]
-pub struct VertexDataU8 {
-    pub kind: EVertexDataKind,
-    pub data: Share<Vec<u8>>,
+pub struct VertexBufferU8<GBID: TGeometryBufferID> {
+    pub data: GBID,
     pub offset: u32,
     pub size: u32,
 }
 
 #[derive(Debug, Clone)]
-pub struct VertexDataU16 {
-    pub kind: EVertexDataKind,
-    pub data: Share<Vec<u16>>,
+pub struct VertexBufferU16<GBID: TGeometryBufferID> {
+    pub data: GBID,
     pub offset: u32,
     pub size: u32,
 }
 
 #[derive(Debug, Clone)]
-pub struct VertexDataU32 {
-    pub kind: EVertexDataKind,
-    pub data: Share<Vec<u32>>,
+pub struct VertexBufferU32<GBID: TGeometryBufferID> {
+    pub data: GBID,
     pub offset: u32,
     pub size: u32,
 }
 
 #[derive(Debug, Clone)]
-pub struct VertexDataF32 {
-    pub kind: EVertexDataKind,
-    pub data: Share<Vec<f32>>,
+pub struct VertexBufferF32<GBID: TGeometryBufferID> {
+    pub data: GBID,
     pub offset: u32,
     pub size: u32,
 }
 
-impl VertexDataF32 {
-    pub fn set(&mut self, data: &[f32], offset: usize) {
-        // let len = data.len();
-        // let end = len + offset;
-        // let store = self.data.borrow_mut();
-
-        // for i in 0..len {
-        //     let t = store.get_mut(i + offset).unwrap();
-        //     *t = data[i];
-        // }
-    }
-}
-
 #[derive(Debug, Clone)]
-pub struct VertexDataF64 {
-    pub kind: EVertexDataKind,
-    pub data: Share<Vec<f64>>,
+pub struct VertexBufferF64<GBID: TGeometryBufferID> {
+    pub data: GBID,
     pub offset: u32,
     pub size: u32,
 }

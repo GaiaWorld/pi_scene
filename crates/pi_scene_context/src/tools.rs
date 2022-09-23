@@ -1,17 +1,16 @@
-use pi_scene_geometry::TVertexDataKindKey;
-use pi_scene_material::{material::TMaterialBlockKindKey, texture::TextureKey};
+use pi_scene_data_container::{TMaterialBlockKindKey, TVertexBufferKindKey, TextureID, TGeometryBufferID};
 
 use crate::meshes::mesh::Mesh;
 
 
-pub fn scene0_camera0_meshes<K: TVertexDataKindKey, K0: TMaterialBlockKindKey, K2D: TextureKey>(meshes: Vec<Mesh<K, K0, K2D>>) {
+pub fn scene0_camera0_meshes<VBK: TVertexBufferKindKey, MBKK: TMaterialBlockKindKey, GBID: TGeometryBufferID, TID: TextureID>(meshes: Vec<Mesh<VBK, MBKK, GBID, TID>>) {
 
 }
 /// 实例化 mesh
-pub fn scene0_camera0_meshes_instanced<K: TVertexDataKindKey, K0: TMaterialBlockKindKey, K2D: TextureKey>(meshes: Vec<Mesh<K, K0, K2D>>) {
+pub fn scene0_camera0_meshes_instanced<VBK: TVertexBufferKindKey, MBKK: TMaterialBlockKindKey, GBID: TGeometryBufferID, TID: TextureID>(meshes: Vec<Mesh<VBK, MBKK, GBID, TID>>) {
     
 }
 /// 合并 mesh
-pub fn scene0_camera0_meshes_static<K: TVertexDataKindKey, K0: TMaterialBlockKindKey, K2D: TextureKey>(meshes: Vec<Mesh<K, K0, K2D>>) {
+pub fn scene0_camera0_meshes_static<VBK: TVertexBufferKindKey, MBKK: TMaterialBlockKindKey, GBID: TGeometryBufferID, TID: TextureID>(meshes: Vec<Mesh<VBK, MBKK, GBID, TID>>) {
     
 }

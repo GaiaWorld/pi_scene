@@ -21,6 +21,7 @@ naga = { version = "0.8", features = [
 bytemuck = { version = "1.4", features = ["derive"] }
 pi_slotmap = "0.1"
 pi_hash="0.1"
+pi_scene_data_container = { path = "../pi_scene_data_container" }
 pi_scene_math = { path = "../pi_scene_math" }
 pi_scene_geometry = { path = "../pi_scene_geometry" }
 pi_scene_material = { path = "../pi_scene_material" }

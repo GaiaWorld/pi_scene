@@ -63,7 +63,9 @@ impl PipelineKeyCalcolator {
         Self { key: 0, use_bytes: 0 }
     }
 }
-
+/// gen_pipeline_key
+/// * `depth_stencil_bias_mode` DepthStencilState.bias 的设置 由外部定义一定数量的设置模板, 该值即为模板标识
+/// * `depth_stencil_bias_modes_use_bite` DepthStencilState.bias 的设置 由外部定义一定数量的设置模板, 该值即描述模板数量的数值可以用多少个字节表达
 pub fn gen_pipeline_key(
     calcolator: &mut PipelineKeyCalcolator,
     primitive: &wgpu::PrimitiveState,

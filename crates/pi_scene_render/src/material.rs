@@ -1,10 +1,7 @@
-use std::sync::Arc;
-
 use pi_hash::XHashMap;
-use pi_scene_geometry::TVertexDataKindKey;
-use pi_scene_material::{material::{TMaterialBlockKindKey, Material}, texture::TextureKey};
+use pi_scene_data_container::{TVertexBufferKindKey, TMaterialBlockKindKey, TextureID};
+use pi_scene_material::{material::Material};
 use pi_scene_pipeline_key::pipeline_key::PipelineKey;
-use render_core::rhi::shader::Shader;
 
 use crate::pipeline::{PipelineSimple};
 
@@ -31,7 +28,7 @@ pub struct EffectMaterial {
 }
 
 impl EffectMaterial {
-    pub fn update_uniform<K: TVertexDataKindKey, K0: TMaterialBlockKindKey, K2D: TextureKey>(&self, material_data: &mut Material<K, K0, K2D>) {
-        
+    pub fn update_uniform<VBK: TVertexBufferKindKey, MBKK: TMaterialBlockKindKey, TID: TextureID>(&self, material_data: &mut Material<VBK, MBKK, TID>) {
+        todo!()
     }
 }
