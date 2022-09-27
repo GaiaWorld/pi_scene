@@ -10,8 +10,9 @@ layout(location = 0) out vec4 v_color;
 layout(location = 1) out vec2 v_texCoords;
 
 layout(set = 0, binding = 0) uniform Param {
-    vec2 u_visibility;
     mat4 u_projTrans;
+    vec4 u_maskflag;
+    vec2 u_visibility;
 };
 
 void main() {

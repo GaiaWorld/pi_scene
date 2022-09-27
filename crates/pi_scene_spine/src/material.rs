@@ -1,15 +1,16 @@
 use std::hash;
 
-use pi_scene_geometry::{geometry::{GeometryBufferDesc}, vertex_data::EVertexDataFormat};
+use pi_scene_geometry::{geometry::{GeometryBufferDesc},};
 use pi_scene_material::{material::{Material, MaterialUniformDesc, MaterialAttributeDesc, EUniformDataFormat, UnifromData, MaterialTextureDesc, UniformKindFloat2}, texture::{MaterialTextureSampler, }};
 use pi_scene_math::{Matrix, Vector4};
-use pi_scene_data_container::{TextureID, TexturePool};
+use pi_scene_data_container::{TextureID, TexturePool, EVertexDataFormat};
 
 use crate::shaders::{SpineShaderPool, EShader};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, hash::Hash)]
 pub enum SpineVertexBufferKindKey {
     Vertices,
+    Indices,
 }
 impl pi_scene_data_container::TVertexBufferKindKey for SpineVertexBufferKindKey {}
 
@@ -27,7 +28,7 @@ impl pi_scene_data_container::TMaterialBlockKindKey for SpineMaterialBlockKindKe
 
 pub struct SpineMaterialColored {}
 impl SpineMaterialColored {
-    const A_VERTICE: GeometryBufferDesc<SpineVertexBufferKindKey> = GeometryBufferDesc { slot: 0, format: EVertexDataFormat::F32, kind: SpineVertexBufferKindKey::Vertices };
+    const A_VERTICE: GeometryBufferDesc<SpineVertexBufferKindKey> = GeometryBufferDesc { slot: 0, format: EVertexDataFormat::F32, kind: SpineVertexBufferKindKey::Vertices, size_per_vertex: 8 };
     const U_MVP_MATRIX: MaterialUniformDesc<SpineMaterialBlockKindKey> = MaterialUniformDesc { kind: SpineMaterialBlockKindKey::MVPMatrix, format: EUniformDataFormat::Mat4, bind: 0 };
     const U_MASK_FLAG: MaterialUniformDesc<SpineMaterialBlockKindKey> = MaterialUniformDesc { kind: SpineMaterialBlockKindKey::MaskFlag, format: EUniformDataFormat::Float4, bind: 0 };
 
@@ -39,7 +40,7 @@ impl SpineMaterialColored {
         mat.init(
             device,
             vec![
-                SpineMaterialColored::A_VERTICE
+                Self::A_VERTICE
             ],
             wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             vec![
@@ -55,6 +56,7 @@ impl SpineMaterialColored {
 
 pub struct SpineMaterialColoredTextured {}
 impl SpineMaterialColoredTextured {
+    const A_VERTICE: GeometryBufferDesc<SpineVertexBufferKindKey> = GeometryBufferDesc { slot: 0, format: EVertexDataFormat::F32, kind: SpineVertexBufferKindKey::Vertices, size_per_vertex: 8 };
     const VISIBILITY: MaterialUniformDesc<SpineMaterialBlockKindKey> = MaterialUniformDesc { kind: SpineMaterialBlockKindKey::Visibility, format: EUniformDataFormat::Float2, bind: 0 };
     const TEXTURE: MaterialTextureDesc<SpineMaterialBlockKindKey> = MaterialTextureDesc { kind: SpineMaterialBlockKindKey::Texture, bind: 1, bind_sampler: 0 };
     pub fn init<SP: SpineShaderPool, TID: TextureID>(
@@ -65,7 +67,7 @@ impl SpineMaterialColoredTextured {
         mat.init(
             device,
             vec![
-                SpineMaterialColored::A_VERTICE
+                Self::A_VERTICE
             ],
             wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             vec![
@@ -104,6 +106,7 @@ impl SpineMaterialColoredTextured {
 
 pub struct SpineMaterialColoredTexturedTwo {}
 impl SpineMaterialColoredTexturedTwo {
+    const A_VERTICE: GeometryBufferDesc<SpineVertexBufferKindKey> = GeometryBufferDesc { slot: 0, format: EVertexDataFormat::F32, kind: SpineVertexBufferKindKey::Vertices, size_per_vertex: 12 };
     pub fn init<SP: SpineShaderPool, TID: TextureID>(
         mat: &mut Material<SpineVertexBufferKindKey, SpineMaterialBlockKindKey, TID>,
         device: &wgpu::Device,
@@ -112,7 +115,7 @@ impl SpineMaterialColoredTexturedTwo {
         mat.init(
             device,
             vec![
-                SpineMaterialColored::A_VERTICE
+                Self::A_VERTICE
             ],
             wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             vec![

@@ -1,5 +1,5 @@
 use std::hash::Hash;
-use pi_scene_data_container::{TVertexBufferKindKey, TMaterialBlockKindKey, TextureID, TexturePool, GeometryBufferPool, TGeometryBufferID};
+use pi_scene_data_container::{TVertexBufferKindKey, TMaterialBlockKindKey, TextureID, TexturePool, GeometryBufferPool, TGeometryBufferID, EVertexDataFormat};
 use pi_scene_geometry::{geometry::{GeometryBufferDesc, Geometry}};
 use pi_scene_math::{Matrix, Vector2, Vector4, Matrix2, Color4};
 use pi_scene_pipeline_key::uniform_info::calc_uniform_size;
@@ -158,6 +158,13 @@ impl UnifromData {
     }
 }
 
+///
+/// 材质
+/// * 抽象 Uniform 数据操作
+///   * 在 JS 原本操作为
+///     * 接口封装层 setUniform数据类型(属性名称, Value)
+///   * 此处封装为 set_uniform(属性描述, Value)
+///     * 属性描述 对于一个 Shader 而言是唯一的
 pub struct Material<VBK: TVertexBufferKindKey, MBKK: TMaterialBlockKindKey, TID: TextureID> {
     /** Uniforms */
     uniform_bind_group: Option<wgpu::BindGroup>,
@@ -505,83 +512,93 @@ impl<VBK: TVertexBufferKindKey, MBKK: TMaterialBlockKindKey, TID: TextureID> Mat
         }
     }
 
-    pub fn set_vertices<'a, GBID: TGeometryBufferID, GBP: GeometryBufferPool<GBID>>(&'a self, renderpass: &mut wgpu::RenderPass<'a>, geometry: &Geometry<VBK, GBID>, geo_buffer_pool: &GBP) {
+    pub fn draw<'a, GBID: TGeometryBufferID, GBP: GeometryBufferPool<GBID>>(&'a self, renderpass: &mut wgpu::RenderPass<'a>, geometry: &Geometry<VBK, GBID>, geo_buffer_pool: &'a GBP) -> Result<(), EMaterialError> {
+        self.bind_groups(renderpass);
+
         self.attribute_descs.iter().for_each(|desc| {
             let data = geometry.get_vertices(desc);
             match desc.format {
-                pi_scene_geometry::vertex_data::EVertexDataFormat::U8 => match data {
+                EVertexDataFormat::U8 => match data {
                     Some(id) => {
                         match geo_buffer_pool.get_buffer(&id) {
                             Some(buffer) => {
                                 renderpass.set_vertex_buffer(desc.slot, buffer.slice(..));
                             },
-                            None => todo!(),
+                            None => {},
                         }
                     },
-                    None => todo!(),
+                    None => {},
                 },
-                pi_scene_geometry::vertex_data::EVertexDataFormat::U16 => match data {
+                EVertexDataFormat::U16 => match data {
                     Some(id) => {
                         match geo_buffer_pool.get_buffer(&id) {
                             Some(buffer) => {
                                 renderpass.set_vertex_buffer(desc.slot, buffer.slice(..));
                             },
-                            None => todo!(),
+                            None => {},
                         }
                     },
-                    None => todo!(),
+                    None => {},
                 },
-                pi_scene_geometry::vertex_data::EVertexDataFormat::U32 => match data {
+                EVertexDataFormat::U32 => match data {
                     Some(id) => {
                         match geo_buffer_pool.get_buffer(&id) {
                             Some(buffer) => {
                                 renderpass.set_vertex_buffer(desc.slot, buffer.slice(..));
                             },
-                            None => todo!(),
+                            None => {},
                         }
                     },
-                    None => todo!(),
+                    None => {},
                 },
-                pi_scene_geometry::vertex_data::EVertexDataFormat::F32 => match data {
+                EVertexDataFormat::F32 => match data {
                     Some(id) => {
                         match geo_buffer_pool.get_buffer(&id) {
                             Some(buffer) => {
                                 renderpass.set_vertex_buffer(desc.slot, buffer.slice(..));
                             },
-                            None => todo!(),
+                            None => {},
                         }
                     },
-                    None => todo!(),
+                    None => {},
                 },
-                pi_scene_geometry::vertex_data::EVertexDataFormat::F64 => match data {
+                EVertexDataFormat::F64 => match data {
                     Some(id) => {
                         match geo_buffer_pool.get_buffer(&id) {
                             Some(buffer) => {
                                 renderpass.set_vertex_buffer(desc.slot, buffer.slice(..));
                             },
-                            None => todo!(),
+                            None => {},
                         }
                     },
-                    None => todo!(),
+                    None => {},
                 },
             }
         });
 
+        let instance_count = geometry.get_instanced_number(geo_buffer_pool);
+
         match geometry.get_indices() {
-            Some(id) => match geo_buffer_pool.get_buffer(&id) {
+            Some(indices_buffer_id) => match geo_buffer_pool.get_buffer(&indices_buffer_id) {
                 Some(buffer) => {
                     renderpass.set_index_buffer(buffer.slice(..), wgpu::IndexFormat::Uint16);
-                    renderpass.draw_indexed(0..geo_buffer_pool.get_size(&id) as u32, 0, 0..);
+                    renderpass.draw_indexed(0..geo_buffer_pool.get_size(&indices_buffer_id) as u32, 0, 0..instance_count as u32);
+                    Ok(())
                 },
                 None => {
-                    
+                    Err(EMaterialError::NotFoundIndicesBuffer)
                 },
             },
             None => {
                 match geometry.get_vertices_number(geo_buffer_pool) {
-                    Some(count) => renderpass.draw(0..count as u32, instances),
-                    None => todo!(),
-                };
+                    Some(count) => {
+                        renderpass.draw(0..count as u32, 0..instance_count as u32);
+                        Ok(())
+                    },
+                    None => {
+                        Ok(())
+                    },
+                }
             },
         }
 

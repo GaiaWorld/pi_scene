@@ -5,15 +5,6 @@ use pi_scene_data_container::{TVertexBufferKindKey, TGeometryBufferID};
 use pi_share::Share;
 use wgpu::util::DeviceExt;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum EVertexDataFormat {
-    U8,
-    U16,
-    U32,
-    F32,
-    F64,
-}
-
 #[derive(Debug, Clone, Copy)]
 pub enum EVertexDataKind {
     Position,

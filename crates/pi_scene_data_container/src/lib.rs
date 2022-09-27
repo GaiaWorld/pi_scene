@@ -126,37 +126,63 @@ impl TGeometryBufferID for i128 {}
 impl TGeometryBufferID for isize {}
 impl TGeometryBufferID for &str {}
 
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum EVertexDataFormat {
+    U8,
+    U16,
+    U32,
+    F32,
+    F64,
+}
+
 pub trait GeometryBufferPool<GBID: TGeometryBufferID> {
-    fn insert<T: Clone + Copy + Pod>(&self, data: GeometryBuffer<T>) -> GBID;
-    fn remove<T: Clone + Copy + Pod>(&self, key: &GBID) -> Option<GeometryBuffer<T>>;
-    fn get<T: Clone + Copy + Pod>(&self, key: &GBID) -> Option<&GeometryBuffer<T>>;
+    fn insert(&mut self, data: GeometryBuffer) -> GBID;
+    fn remove(&mut self, key: &GBID) -> Option<GeometryBuffer>;
+    fn get(&self, key: &GBID) -> Option<&GeometryBuffer>;
     fn get_size(&self, key: &GBID) -> usize;
-    fn get_mut<T: Clone + Copy + Pod>(&self, key: &GBID) -> Option<&mut GeometryBuffer<T>>;
+    fn get_mut(&mut self, key: &GBID) -> Option<&mut GeometryBuffer>;
     fn get_buffer(&self, key: &GBID) -> Option<&wgpu::Buffer>;
 }
 
 #[derive(Debug)]
-pub struct GeometryBuffer<T: Clone + Copy + Pod> {
+pub struct GeometryBuffer {
     dirty: bool,
+    kind: EVertexDataFormat,
     updateable: bool,
-    data: Vec<T>,
+    as_indices: bool,
+    u8: Vec<u8>,
+    u16: Vec<u16>,
+    u32: Vec<u32>,
+    f32: Vec<f32>,
+    f64: Vec<f64>,
     _size: usize,
     buffer: Option<wgpu::Buffer>,
 }
-impl<T: Clone + Copy + Pod> GeometryBuffer<T> {
-    pub fn new(data: &[T], updateable: bool) -> Self {
+impl GeometryBuffer {
+    pub fn new(updateable: bool, kind: EVertexDataFormat, as_indices: bool) -> Self {
         Self {
             dirty: true,
+            kind,
+            as_indices,
             updateable,
-            data: data.to_vec(),
-            _size: data.len(),
+            u8: vec![],
+            u16: vec![],
+            u32: vec![],
+            f32: vec![],
+            f64: vec![],
+            _size: 0,
             buffer: None,
         }
     }
-    pub fn reset(&mut self, data: &[T]) -> bool {
+    pub fn reset(&mut self) -> bool {
         if self.updateable {
-            self.data = data.to_vec();
-            self._size = self.data.len();
+            self.u8  = vec![];
+            self.u16 = vec![];
+            self.u32 = vec![];
+            self.f32 = vec![];
+            self.f64 = vec![];
+            self._size = 0;
             self.dirty = true;
             true
         } else {
@@ -167,56 +193,100 @@ impl<T: Clone + Copy + Pod> GeometryBuffer<T> {
         match self.buffer.as_ref() {
             Some(buffer) => {
                 if self.updateable && self.dirty {
-                    queue.write_buffer(buffer, 0, bytemuck::cast_slice(&self.data));
+                    match self.kind {
+                        EVertexDataFormat::U8 => {
+                            queue.write_buffer(buffer, 0, bytemuck::cast_slice(&self.u8 ))
+                        },
+                        EVertexDataFormat::U16 => {
+                            queue.write_buffer(buffer, 0, bytemuck::cast_slice(&self.u16))
+                        },
+                        EVertexDataFormat::U32 => {
+                            queue.write_buffer(buffer, 0, bytemuck::cast_slice(&self.u32))
+                        },
+                        EVertexDataFormat::F32 => {
+                            queue.write_buffer(buffer, 0, bytemuck::cast_slice(&self.f32))
+                        },
+                        EVertexDataFormat::F64 => {
+                            queue.write_buffer(buffer, 0, bytemuck::cast_slice(&self.f64))
+                        },
+                    }
+
+                    self.dirty = false;
                 }
             },
             None => {
+                let usage = if self.as_indices { wgpu::BufferUsages::INDEX } else { wgpu::BufferUsages::VERTEX };
                 let usage = if self.updateable {
-                    wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST
+                    usage | wgpu::BufferUsages::COPY_DST
                 } else {
-                    wgpu::BufferUsages::INDEX
+                    usage
                 };
-                self.buffer = Some(
-                    device.create_buffer_init(
-                        &wgpu::util::BufferInitDescriptor {
-                            label: None,
-                            contents: bytemuck::cast_slice(&self.data),
-                            usage,
-                        }
-                    )
-                );
-                // if !self.updateable {
-                //     self.data.clear();
-                // }
+                self.buffer = match self.kind {
+                    EVertexDataFormat::U8 => {
+                        Some( device.create_buffer_init( &wgpu::util::BufferInitDescriptor { label: None, contents: bytemuck::cast_slice(&self.u8), usage, } ) )
+                    },
+                    EVertexDataFormat::U16 => {
+                        Some( device.create_buffer_init( &wgpu::util::BufferInitDescriptor { label: None, contents: bytemuck::cast_slice(&self.u16), usage, } ) )
+                    },
+                    EVertexDataFormat::U32 => {
+                        Some( device.create_buffer_init( &wgpu::util::BufferInitDescriptor { label: None, contents: bytemuck::cast_slice(&self.u32), usage, } ) )
+                    },
+                    EVertexDataFormat::F32 => {
+                        Some( device.create_buffer_init( &wgpu::util::BufferInitDescriptor { label: None, contents: bytemuck::cast_slice(&self.f32), usage, } ) )
+                    },
+                    EVertexDataFormat::F64 => {
+                        Some( device.create_buffer_init( &wgpu::util::BufferInitDescriptor { label: None, contents: bytemuck::cast_slice(&self.f64), usage, } ) )
+                    },
+                }
             },
         }
     }
     pub fn uninstall_buffer(&mut self) {
         self.buffer = None;
     }
-    pub fn update(&mut self, data: &[T], offset: usize) -> bool {
-        if self.updateable {
-            let len = data.len();
-            let old_size = self.data.len();
+    pub fn update_u8(&mut self, data: &[u8], offset: usize) -> bool {
+        if self.updateable && self.kind == EVertexDataFormat::U8 {
+            self._size = update(&mut self.u8, data, offset);
+            self.dirty = true;
     
-            let mut index = 0;
-            if offset < old_size {
-                for i in offset..old_size {
-                    self.data[i] = data[index];
-                    index += 1;
-                    if len <= index  {
-                        break;
-                    }
-                }
-            }
+            true
+        } else {
+            false
+        }
+    }
+    pub fn update_u16(&mut self, data: &[u16], offset: usize) -> bool {
+        if self.updateable && self.kind == EVertexDataFormat::U16 {
+            self._size = update(&mut self.u16, data, offset);
+            self.dirty = true;
     
-            if index < len {
-                for i in index..len {
-                    self.data.push(data[i]);
-                }
-            }
-
-            self._size = self.data.len();
+            true
+        } else {
+            false
+        }
+    }
+    pub fn update_u32(&mut self, data: &[u32], offset: usize) -> bool {
+        if self.updateable && self.kind == EVertexDataFormat::U32 {
+            self._size = update(&mut self.u32, data, offset);
+            self.dirty = true;
+    
+            true
+        } else {
+            false
+        }
+    }
+    pub fn update_f32(&mut self, data: &[f32], offset: usize) -> bool {
+        if self.updateable && self.kind == EVertexDataFormat::F32 {
+            self._size = update(&mut self.f32, data, offset);
+            self.dirty = true;
+    
+            true
+        } else {
+            false
+        }
+    }
+    pub fn update_f64(&mut self, data: &[f64], offset: usize) -> bool {
+        if self.updateable && self.kind == EVertexDataFormat::F64 {
+            self._size = update(&mut self.f64, data, offset);
             self.dirty = true;
     
             true
@@ -230,4 +300,28 @@ impl<T: Clone + Copy + Pod> GeometryBuffer<T> {
     pub fn size(&self) -> usize {
         self._size
     }
+}
+
+pub fn update<T: Clone + Copy + Pod>(pool: &mut Vec<T>, data: &[T], offset: usize) -> usize {
+    let len = data.len();
+    let old_size = pool.len();
+
+    let mut index = 0;
+    if offset < old_size {
+        for i in offset..old_size {
+            pool[i] = data[index];
+            index += 1;
+            if len <= index  {
+                break;
+            }
+        }
+    }
+
+    if index < len {
+        for i in index..len {
+            pool.push(data[i]);
+        }
+    }
+
+    pool.len()
 }

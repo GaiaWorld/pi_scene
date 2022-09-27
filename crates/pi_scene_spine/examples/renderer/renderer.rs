@@ -3,7 +3,7 @@ use std::{num::NonZeroU32, time::SystemTime, sync::Arc};
 
 use image::{GenericImageView};
 use pi_render::{components::view::target_alloc::{SafeAtlasAllocator, ShareTargetView}, rhi::{device::RenderDevice, asset::{RenderRes, }, }};
-use pi_scene_data_container::TexturePool;
+use pi_scene_data_container::{TexturePool, GeometryBufferPool};
 use pi_scene_math::{Matrix, Vector4};
 use pi_scene_spine::{SpineShaderPoolSimple, pipeline::{SpinePipelinePool, SpinePipelinePoolSimple}, mesh_renderer::MeshRendererPool, shaders::EShader};
 use winit::{window::Window, event::WindowEvent};
@@ -19,6 +19,70 @@ impl TexturePool<usize> for DemoTexturePool {
     }
 }
 
+pub struct DemoGeometryBufferPool {
+    list: Vec<Option<pi_scene_data_container::GeometryBuffer>>,
+}
+
+impl GeometryBufferPool<usize> for DemoGeometryBufferPool {
+    fn insert(&mut self, data: pi_scene_data_container::GeometryBuffer) -> usize {
+        let result = self.list.len();
+
+        self.list.push(Some(data));
+
+        result
+    }
+
+    fn remove(&mut self, key: &usize) -> Option<pi_scene_data_container::GeometryBuffer> {
+        if self.list.len() > *key {
+            self.list.push(None);
+            self.list.swap_remove(*key)
+        } else {
+            None
+        }
+    }
+
+    fn get(&self, key: &usize) -> Option<&pi_scene_data_container::GeometryBuffer> {
+        match self.list.get(*key) {
+            Some(geo) => match geo {
+                Some(geo) => Some(geo),
+                None => None,
+            },
+            None => None,
+        }
+        
+    }
+
+    fn get_size(&self, key: &usize) -> usize {
+        match self.list.get(*key) {
+            Some(geo) => match geo {
+                Some(geo) => geo.size(),
+                None => 0,
+            },
+            None => 0,
+        }
+    }
+
+    fn get_mut(&mut self, key: &usize) -> Option<&mut pi_scene_data_container::GeometryBuffer> {
+        match self.list.get_mut(*key) {
+            Some(geo) => match geo {
+                Some(geo) => Some(geo),
+                None => None,
+            },
+            None => None,
+        }
+    }
+
+    fn get_buffer(&self, key: &usize) -> Option<&wgpu::Buffer> {
+        match self.list.get(*key) {
+            Some(geo) => match geo {
+                Some(geo) => geo.get_buffer(),
+                None => None,
+            },
+            None => None,
+        }
+    }
+}
+
 pub struct State {
     pub surface: wgpu::Surface,
     pub renderdevice: RenderDevice,
@@ -31,8 +95,9 @@ pub struct State {
     pub lasttime: SystemTime,
     pub shaders: SpineShaderPoolSimple,
     pub pipelines: SpinePipelinePoolSimple,
-    pub rendererpool: MeshRendererPool<usize>,
+    pub rendererpool: MeshRendererPool<usize, usize>,
     pub textures: DemoTexturePool,
+    pub geo_pool: DemoGeometryBufferPool,
 }
 
 impl State {
@@ -140,6 +205,7 @@ impl State {
             pipelines: SpinePipelinePoolSimple::default(),
             rendererpool: MeshRendererPool::default(),
             textures,
+            geo_pool: DemoGeometryBufferPool { list: vec![] }
         }
     }
 
@@ -212,31 +278,32 @@ impl State {
 
         {
             self.rendererpool.reset();
-            self.rendererpool.insert(
-                &self.renderdevice,
-                &self.queue,
-                &[
-                    -0.5, -0.5,  1.0, 0., 0., 1.0,
-                    -0.5,  0.5,  1.0, 0., 0., 1.0,
-                     0.5,  0.5,  0.0, 0., 0., 1.0,
-                     0.5, -0.5,  1.0, 0., 0., 1.0,
-                ],
-                &[
-                    0, 1, 2,
-                    0, 2, 3
-                ],
-                EShader::Colored,
-                Matrix::identity(),
-                Vector4::new(0., 0., 0., 0.),
-                wgpu::BlendFactor::SrcAlpha,
-                wgpu::BlendFactor::OneMinusSrcAlpha,
-                ouput_format,
-                None,
-                None,
-                &mut self.shaders,
-                &mut self.pipelines,
-                &self.textures
-            );
+            // self.rendererpool.insert(
+            //     &self.renderdevice,
+            //     &self.queue,
+            //     &[
+            //         -0.5, -0.5,  1.0, 0., 0., 1.0,
+            //         -0.5,  0.5,  1.0, 0., 0., 1.0,
+            //          0.5,  0.5,  0.0, 0., 0., 1.0,
+            //          0.5, -0.5,  1.0, 0., 0., 1.0,
+            //     ],
+            //     &[
+            //         0, 1, 2,
+            //         0, 2, 3
+            //     ],
+            //     EShader::Colored,
+            //     Matrix::identity(),
+            //     Vector4::new(0., 0., 0., 0.),
+            //     wgpu::BlendFactor::SrcAlpha,
+            //     wgpu::BlendFactor::OneMinusSrcAlpha,
+            //     ouput_format,
+            //     None,
+            //     None,
+            //     &mut self.shaders,
+            //     &mut self.pipelines,
+            //     &self.textures,
+            //     &mut self.geo_pool,
+            // );
             self.rendererpool.insert(
                 &self.renderdevice,
                 &self.queue,
@@ -260,7 +327,8 @@ impl State {
                 Some(0),
                 &mut self.shaders,
                 &mut self.pipelines,
-                &self.textures
+                &self.textures,
+                &mut self.geo_pool,
             );
             let mut renderpass = encoder.begin_render_pass(
                 &wgpu::RenderPassDescriptor {
@@ -288,7 +356,15 @@ impl State {
                 1.
             );
             self.rendererpool.update_uniforms(&self.renderdevice, &self.queue,  &self.shaders, &self.textures);
-            self.rendererpool.draw(&self.renderdevice, &self.queue, &mut renderpass, &self.pipelines, &self.shaders, &self.textures);
+            self.rendererpool.draw(
+                &self.renderdevice, 
+                &self.queue, 
+                &mut renderpass, 
+                &self.pipelines, 
+                &self.shaders, 
+                &self.textures,
+                &mut self.geo_pool,
+            );
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));

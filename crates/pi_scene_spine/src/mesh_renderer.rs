@@ -1,4 +1,4 @@
-use pi_scene_data_container::{TextureID, TexturePool};
+use pi_scene_data_container::{TextureID, TexturePool, TGeometryBufferID, GeometryBufferPool};
 use pi_scene_material::{material::{UniformKindFloat4, UniformKindMat4}};
 use pi_scene_math::{Number};
 use pi_scene_pipeline_key::pipeline_key::PipelineKey;
@@ -7,14 +7,14 @@ use wgpu::DepthStencilState;
 use crate::{mesh::Mesh, shaders::{EShader, SpineShaderPool}, pipeline::{SpinePipelinePool, SpinePipeline}};
 
 
-pub struct  MeshRenderer<TID: TextureID> {
-    mesh: Mesh<TID>,
+pub struct  MeshRenderer<GBID: TGeometryBufferID, TID: TextureID> {
+    mesh: Mesh<GBID, TID>,
     blend: Option<wgpu::BlendState>,
     shader: EShader,
     pipeline_key: Option<PipelineKey>,
 }
 
-impl<TID: TextureID> MeshRenderer<TID> {
+impl<GBID: TGeometryBufferID, TID: TextureID> MeshRenderer<GBID, TID> {
     pub fn new() -> Self {
         Self {
             mesh: Mesh::new(),
@@ -23,7 +23,7 @@ impl<TID: TextureID> MeshRenderer<TID> {
             pipeline_key: None,
         }
     }
-    pub fn update<SP: SpineShaderPool, SPP: SpinePipelinePool, TP: TexturePool<TID>>(
+    pub fn update<SP: SpineShaderPool, SPP: SpinePipelinePool, GBP: GeometryBufferPool<GBID>, TP: TexturePool<TID>>(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -40,13 +40,14 @@ impl<TID: TextureID> MeshRenderer<TID> {
         shaders: &mut SP,
         pipelines: &mut SPP,
         textures: &TP,
+        geo_buffers: &mut GBP,
     ) {
-        self.mesh.init(device, shader, shaders);
+        self.mesh.init(device, shader, shaders, geo_buffers);
         self.mesh.mvp_matrix(queue, mvp);
         self.mesh.mask_flag(queue, mask_flag);
         self.mesh.texture(device, texture_key, shaders, textures);
-        self.mesh.set_vertices(device, queue, vertices);
-        self.mesh.set_indices(device, queue, indices);
+        self.mesh.set_vertices(device, queue, vertices, geo_buffers);
+        self.mesh.set_indices(device, queue, indices, geo_buffers);
         self.shader = shader;
         self.blend = Some(
             wgpu::BlendState {
@@ -67,7 +68,7 @@ impl<TID: TextureID> MeshRenderer<TID> {
         ];
         self.pipeline_key = Some(SpinePipeline::check(shader, device, shaders, pipelines, &targets, wgpu::PrimitiveState::default(), depth_stencil));
     }
-    pub fn draw<'a, SPP: SpinePipelinePool, SP: SpineShaderPool, TP: TexturePool<TID>>(
+    pub fn draw<'a, SPP: SpinePipelinePool, SP: SpineShaderPool, GBP: GeometryBufferPool<GBID>, TP: TexturePool<TID>>(
         &'a self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -75,6 +76,7 @@ impl<TID: TextureID> MeshRenderer<TID> {
         pipelines: &'a SPP,
         shaders: &'a SP,
         textures: &'a TP,
+        geo_buffers: &'a GBP,
     ) {
         match self.pipeline_key {
             Some(key) => {
@@ -82,7 +84,7 @@ impl<TID: TextureID> MeshRenderer<TID> {
                 match SpinePipeline::get(self.shader, pipelines, key) {
                     Some(pipeline) => {
                         renderpass.set_pipeline(&pipeline.pipeline);
-                        self.mesh.draw(device, queue, renderpass, shaders, textures);
+                        self.mesh.draw(device, queue, renderpass, shaders, textures, geo_buffers);
                     },
                     None => {},
                 }
@@ -103,19 +105,19 @@ impl<TID: TextureID> MeshRenderer<TID> {
     }
 }
 
-pub struct MeshRendererPool<TID: TextureID> {
-    renderers: Vec<MeshRenderer<TID>>,
+pub struct MeshRendererPool<GBID: TGeometryBufferID, TID: TextureID> {
+    renderers: Vec<MeshRenderer<GBID, TID>>,
     counter: usize,
 }
 
-impl<TID: TextureID> Default for  MeshRendererPool<TID> {
+impl<GBID: TGeometryBufferID, TID: TextureID> Default for  MeshRendererPool<GBID, TID> {
     fn default() -> Self {
         Self { renderers: vec![], counter: 0 }
     }
 }
 
-impl<TID: TextureID>  MeshRendererPool<TID> {
-    pub fn insert<SP: SpineShaderPool, SPP: SpinePipelinePool, TP: TexturePool<TID>>(
+impl<GBID: TGeometryBufferID, TID: TextureID>  MeshRendererPool<GBID, TID> {
+    pub fn insert<SP: SpineShaderPool, SPP: SpinePipelinePool, GBP: GeometryBufferPool<GBID>, TP: TexturePool<TID>>(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -132,6 +134,7 @@ impl<TID: TextureID>  MeshRendererPool<TID> {
         shaders: &mut SP,
         pipelines: &mut SPP,
         textures: &TP,
+        geo_buffers: &mut GBP,
     ) {
         self.counter += 1;
         if self.renderers.len() < self.counter {
@@ -139,12 +142,12 @@ impl<TID: TextureID>  MeshRendererPool<TID> {
             self.renderers.push(renderer);
         }
 
-        self.renderers.get_mut(self.counter - 1).unwrap().update(device, queue, vertices, indices, shader, mvp, mask_flag, src_factor, dst_factor, target_format, depth_stencil, texture_key, shaders, pipelines, textures);
+        self.renderers.get_mut(self.counter - 1).unwrap().update(device, queue, vertices, indices, shader, mvp, mask_flag, src_factor, dst_factor, target_format, depth_stencil, texture_key, shaders, pipelines, textures, geo_buffers);
     }
     pub fn reset(&mut self) {
         self.counter = 0;
     }
-    pub fn draw<'a, SP: SpineShaderPool, SPP: SpinePipelinePool, TP: TexturePool<TID>>(
+    pub fn draw<'a, SP: SpineShaderPool, SPP: SpinePipelinePool, GBP: GeometryBufferPool<GBID>, TP: TexturePool<TID>>(
         &'a self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -152,10 +155,11 @@ impl<TID: TextureID>  MeshRendererPool<TID> {
         pipelines: &'a SPP,
         shaders: &'a SP,
         textures: &'a TP,
+        geo_buffers: &'a GBP,
     ) {
         for i in 0.. self.counter {
             let renderer = self.renderers.get(i).unwrap();
-            renderer.draw(device, queue, renderpass, pipelines, shaders, textures);
+            renderer.draw(device, queue, renderpass, pipelines, shaders, textures, geo_buffers);
         }
     }
     

@@ -105,7 +105,7 @@ impl SpinePipeline {
             Some(_) => {},
             None => {
                 let shader = shader_pool.get_spine_shader_colored();
-                let pipeline = Self::create(device, shader, targets, primitive, depth_stencil);
+                let pipeline = Self::create(device, shader, targets, primitive, depth_stencil, Some("Colored"));
                 pipelines.record_spine_pipeline_colored(key, pipeline);
             },
         }
@@ -132,7 +132,7 @@ impl SpinePipeline {
             Some(_) => {},
             None => {
                 let shader = shader_pool.get_spine_shader_colored_textured();
-                let pipeline = Self::create(device, shader, targets, primitive, depth_stencil);
+                let pipeline = Self::create(device, shader, targets, primitive, depth_stencil, Some("ColoredTextured"));
                 pipelines.record_spine_pipeline_colored_textured(key, pipeline);
             },
         }
@@ -159,7 +159,7 @@ impl SpinePipeline {
             Some(_) => {},
             None => {
                 let shader = shader_pool.get_spine_shader_colored_textured_two();
-                let pipeline = Self::create(device, shader, targets, primitive, depth_stencil);
+                let pipeline = Self::create(device, shader, targets, primitive, depth_stencil, Some("ColoredTexturedTwo"));
                 pipelines.record_spine_pipeline_colored_textured_two(key, pipeline);
             },
         }
@@ -173,6 +173,7 @@ impl SpinePipeline {
         targets: &[wgpu::ColorTargetState],
         primitive: wgpu::PrimitiveState,
         depth_stencil: Option<wgpu::DepthStencilState>,
+        label: Option<&str>,
     ) -> Self {
         let vertex_layouts = vec![
             wgpu::VertexBufferLayout {
@@ -202,7 +203,7 @@ impl SpinePipeline {
 
         let pipeline = device.create_render_pipeline(
             &wgpu::RenderPipelineDescriptor {
-                label: Some("Colored"),
+                label,
                 layout: Some(&pipeline_layout),
                 vertex: vs_state,
                 fragment: Some(fs_state),

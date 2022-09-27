@@ -51,7 +51,7 @@ mod test {
 
         v0.minimize(&v1, &mut v2);
 
-        nalgebra::Perspective3::
+        // nalgebra::Perspective3::
 
         println!("{:?}", v2);
     }

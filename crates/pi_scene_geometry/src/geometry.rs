@@ -1,9 +1,9 @@
 
 use std::hash::Hash;
-use pi_scene_data_container::{TGeometryBufferID, TVertexBufferKindKey, GeometryBufferPool};
+use pi_scene_data_container::{TGeometryBufferID, TVertexBufferKindKey, GeometryBufferPool, EVertexDataFormat};
 use pi_share::Share;
 use crate::error::EGeometryError;
-use crate::vertex_data::{VertexBufferU8, VertexBufferU16, VertexBufferU32, VertexBufferF32, VertexBufferF64, EVertexDataFormat};
+use crate::vertex_data::{VertexBufferU8, VertexBufferU16, VertexBufferU32, VertexBufferF32, VertexBufferF64};
 
 // #[derive(Debug, Clone)]
 // pub struct GeometryKindBuffer<GBID: TGeometryBufferID> {
@@ -44,9 +44,16 @@ pub struct Geometry<VBK: TVertexBufferKindKey, GBID: TGeometryBufferID> {
     indices_buffer_u32: Option<GBID>,
     data_descs: Vec<GeometryBufferDesc<VBK>>,
     data_indexs: Vec<usize>,
-    position_desc: Option<GeometryBufferDesc<VBK>>,
+    vertex_count_query_desc: Option<GeometryBufferDesc<VBK>>,
+    instanced_count_query_desc: Option<GeometryBufferDesc<VBK>>,
     instance_descs: Vec<GeometryBufferDesc<VBK>>,
     instance_indexs: Vec<usize>,
+}
+
+impl<VBK: TVertexBufferKindKey, GBID: TGeometryBufferID> Default for Geometry<VBK, GBID> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<VBK: TVertexBufferKindKey, GBID: TGeometryBufferID> Geometry<VBK, GBID> {
@@ -61,10 +68,27 @@ impl<VBK: TVertexBufferKindKey, GBID: TGeometryBufferID> Geometry<VBK, GBID> {
             data_indexs: vec![],
             indices_buffer: None,
             indices_buffer_u32: None,
-            position_desc: None,
+            vertex_count_query_desc: None,
+            instanced_count_query_desc: None,
             instance_descs: vec![],
             instance_indexs: vec![],
         }
+    }
+
+    pub fn reset(&mut self) {
+        self.u8_buffers = vec![];
+        self.u16_buffers = vec![];
+        self.u32_buffers = vec![];
+        self.f32_buffers = vec![];
+        self.f64_buffers = vec![];
+        self.data_descs = vec![];
+        self.data_indexs = vec![];
+        self.indices_buffer = None;
+        self.indices_buffer_u32 = None;
+        self.vertex_count_query_desc = None;
+        self.instanced_count_query_desc = None;
+        self.instance_descs = vec![];
+        self.instance_indexs = vec![];
     }
 
     pub fn set(&mut self, desc: GeometryBufferDesc<VBK>, data: Option<GBID>) -> Result<(), EGeometryError> {
@@ -229,6 +253,9 @@ impl<VBK: TVertexBufferKindKey, GBID: TGeometryBufferID> Geometry<VBK, GBID> {
         }
     }
 
+    pub fn set_indices(&mut self, data: Option<GBID>) {
+        self.indices_buffer = data;
+    }
     
     pub fn get_instance(&self, desc: &GeometryBufferDesc<VBK>) -> Option<GBID> {
         let mut result: Option<GBID> = None;
@@ -270,14 +297,16 @@ impl<VBK: TVertexBufferKindKey, GBID: TGeometryBufferID> Geometry<VBK, GBID> {
             None => None,
         }
     }
-    pub fn record_position_desc(&mut self, desc: GeometryBufferDesc<VBK>) {
-        self.position_desc = Some(desc);
+    /// 设置通过哪个 Buffer 描述查询 顶点数量
+    pub fn vertex_count_query_desc(&mut self, desc: GeometryBufferDesc<VBK>) {
+        self.vertex_count_query_desc = Some(desc);
     }
-    pub fn record_instance_desc(&mut self, desc: GeometryBufferDesc<VBK>) {
-        self.position_desc = Some(desc);
+    /// 设置通过哪个 Buffer 描述查询 实例化数量
+    pub fn instanced_count_query_desc(&mut self, desc: GeometryBufferDesc<VBK>) {
+        self.instanced_count_query_desc = Some(desc);
     }
     pub fn get_vertices_number<GBP: GeometryBufferPool<GBID>>(&self, pool: &GBP) -> Option<usize> {
-        let mut result = match self.position_desc {
+        let result = match self.vertex_count_query_desc {
             Some(desc) => {
                 match self.get_vertices(&desc) {
                     Some(id) => {
@@ -287,6 +316,21 @@ impl<VBK: TVertexBufferKindKey, GBID: TGeometryBufferID> Geometry<VBK, GBID> {
                 }
             },
             None => None,
+        };
+
+        result
+    }
+    pub fn get_instanced_number<GBP: GeometryBufferPool<GBID>>(&self, pool: &GBP) -> usize {
+        let result = match self.instanced_count_query_desc {
+            Some(desc) => {
+                match self.get_instance(&desc) {
+                    Some(id) => {
+                        pool.get_size(&id) / desc.size_per_vertex
+                    },
+                    None => 1,
+                }
+            },
+            None => 1,
         };
 
         result

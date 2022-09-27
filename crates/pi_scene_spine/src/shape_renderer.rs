@@ -1,15 +1,15 @@
-use pi_scene_data_container::TextureID;
+use pi_scene_data_container::{TextureID, TGeometryBufferID};
 use pi_scene_math::{Number, Matrix};
 use pi_scene_pipeline_key::pipeline_key::PipelineKey;
 
 use crate::{shaders::{EShader, SpineShaderPool}, mesh::{Mesh, VertexAttribute}, pipeline::{SpinePipelinePool, SpinePipeline}};
 
 
-pub struct ShapeRenderer<TID: TextureID> {
+pub struct ShapeRenderer<GBID: TGeometryBufferID, TID: TextureID> {
     pub src_factor: wgpu::BlendFactor,
     pub dst_factor: wgpu::BlendFactor,
     pub shader: EShader,
-    pub meshes: Vec<Mesh<TID>>,
+    pub meshes: Vec<Mesh<GBID, TID>>,
     pub is_drawing: bool,
     pub draw_calls: usize,
     pub vertices_length: usize,
@@ -24,7 +24,7 @@ pub struct ShapeRenderer<TID: TextureID> {
     vertex_index: usize,
 }
 
-impl<TID: TextureID> ShapeRenderer<TID> {
+impl<GBID: TGeometryBufferID, TID: TextureID> ShapeRenderer<GBID, TID> {
     pub fn new() -> Self {
         let attributes  = vec![
             VertexAttribute::position_2(),

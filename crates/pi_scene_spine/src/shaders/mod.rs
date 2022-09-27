@@ -1,7 +1,9 @@
+use pi_scene_data_container::EVertexDataFormat;
+use pi_scene_geometry::{geometry::GeometryBufferDesc};
 use pi_scene_material::{material::{MaterialTextureDesc, MaterialUniformDesc, EUniformDataFormat}};
 use pi_scene_pipeline_key::uniform_info::calc_uniform_size;
 
-use crate::material::SpineMaterialBlockKindKey;
+use crate::material::{SpineMaterialBlockKindKey, SpineVertexBufferKindKey};
 
 pub mod colored;
 pub mod colored_textured;
@@ -12,6 +14,27 @@ pub enum EShader {
     Colored,
     ColoredTextured,
     TwoColoredTextured,
+}
+
+impl EShader {
+    pub const VERTEX_COLORED: GeometryBufferDesc<SpineVertexBufferKindKey> = GeometryBufferDesc {
+        slot: 0,
+        format: EVertexDataFormat::F32,
+        kind: SpineVertexBufferKindKey::Vertices,
+        size_per_vertex: 2 + 4,
+    };
+    pub const VERTEX_COLORED_TEXTURED: GeometryBufferDesc<SpineVertexBufferKindKey> = GeometryBufferDesc {
+        slot: 0,
+        format: EVertexDataFormat::F32,
+        kind: SpineVertexBufferKindKey::Vertices,
+        size_per_vertex: 2 + 4 + 2,
+    };
+    pub const VERTEX_COLORED_TEXTURED_TWO: GeometryBufferDesc<SpineVertexBufferKindKey> = GeometryBufferDesc {
+        slot: 0,
+        format: EVertexDataFormat::F32,
+        kind: SpineVertexBufferKindKey::Vertices,
+        size_per_vertex: 2 + 4 + 2 + 4,
+    };
 }
 
 pub struct SpineShader {

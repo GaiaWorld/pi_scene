@@ -1,16 +1,16 @@
-use pi_scene_data_container::{TextureID, TexturePool};
+use pi_scene_data_container::{TextureID, TexturePool, TGeometryBufferID, GeometryBufferPool};
 use pi_scene_math::{Number, Matrix};
 use pi_scene_pipeline_key::pipeline_key::PipelineKey;
 
 use crate::{mesh::{Mesh, VertexAttribute}, vec_set, shaders::{EShader, SpineShaderPool}, MAX_VERTICES, pipeline::{SpinePipelinePool, SpinePipeline}};
 
 
-pub struct PolygonBatcher<TID: TextureID> {
+pub struct PolygonBatcher<GBID: TGeometryBufferID, TID: TextureID> {
     pub src_factor: wgpu::BlendFactor,
     pub dst_factor: wgpu::BlendFactor,
     pub blend: Option<wgpu::BlendState>,
     pub shader: EShader,
-    pub meshes: Vec<Mesh<TID>>,
+    pub meshes: Vec<Mesh<GBID, TID>>,
     pub is_drawing: bool,
     pub draw_calls: usize,
     pub vertices_length: usize,
@@ -24,7 +24,7 @@ pub struct PolygonBatcher<TID: TextureID> {
     pub pipeline_key: Option<PipelineKey>,
 }
 
-impl<TID: TextureID> PolygonBatcher<TID> {
+impl<GBID: TGeometryBufferID, TID: TextureID> PolygonBatcher<GBID, TID> {
     pub fn new(
         two_color_tint: bool, 
     ) -> Self {
@@ -103,7 +103,7 @@ impl<TID: TextureID> PolygonBatcher<TID> {
         );
         self.blend = blend;
     }
-    pub fn draw<'a, SP: SpineShaderPool, TP: TexturePool<TID>>(
+    pub fn draw<'a, SP: SpineShaderPool, GBP: GeometryBufferPool<GBID>, TP: TexturePool<TID>>(
         &'a mut self,
         texture_key: Option<TID>,
         texture_pool: &wgpu::TextureView,
@@ -114,6 +114,7 @@ impl<TID: TextureID> PolygonBatcher<TID> {
         renderpass: &mut wgpu::RenderPass<'a>,
         shaders: &mut SP,
         textures: &TP,
+        geo_buffers: &'a mut GBP,
     ) {
         let temp_vertices_length = vertices.len();
         let temp_indices_length = indices.len();
@@ -125,19 +126,27 @@ impl<TID: TextureID> PolygonBatcher<TID> {
 
         if texture_key != last_texture_key {
             self.last_texture_key = texture_key;
-            self.flush(device, queue, renderpass, shaders, textures);
+            self.flush(device, queue, renderpass, shaders, textures, geo_buffers);
         } else {
             if vertices_length + temp_vertices_length > MAX_VERTICES as usize * self.elements_per_vertex as usize
                 || indices_length + temp_indices_length > MAX_VERTICES as usize * 3
             {
-                self.flush(device, queue, renderpass, shaders, textures);
+                self.flush(device, queue, renderpass, shaders, textures, geo_buffers);
             } else {
                 let mesh = self.meshes.get_mut(self.draw_calls).unwrap();
                 vec_set(mesh.get_vertices_mut(), vertices, 0);
             }
         }
     }
-    fn flush<'a, SP: SpineShaderPool, TP: TexturePool<TID>>(&'a mut self, device: &wgpu::Device, queue: &wgpu::Queue, renderpass: &mut wgpu::RenderPass<'a>, shaders: &SP, textures: &TP) {
+    fn flush<'a, SP: SpineShaderPool, GBP: GeometryBufferPool<GBID>, TP: TexturePool<TID>>(
+        &'a mut self, 
+        device: &wgpu::Device, 
+        queue: &wgpu::Queue, 
+        renderpass: &mut wgpu::RenderPass<'a>, 
+        shaders: &SP, 
+        textures: &TP,
+        geo_buffers: &'a mut GBP,
+    ) {
         if self.vertices_length == 0 {
             // self.meshes.get_mut(self.draw_calls).unwrap()
         } else {
@@ -148,21 +157,22 @@ impl<TID: TextureID> PolygonBatcher<TID> {
 
             if self.meshes.len() <= self.draw_calls {
                 let mut mesh = Mesh::new();
-                mesh.init(device, self.shader, shaders);
+                mesh.init(device, self.shader, shaders, geo_buffers);
                 self.meshes.push(mesh);
             }
 
             let mesh = self.meshes.get_mut(self.draw_calls - 1).unwrap();
-            mesh.draw(device, queue, renderpass, shaders, textures);
+            mesh.draw(device, queue, renderpass, shaders, textures, geo_buffers);
         }
     }
-    pub fn end<'a, SP: SpineShaderPool, TP: TexturePool<TID>>(
+    pub fn end<'a, SP: SpineShaderPool, GBP: GeometryBufferPool<GBID>, TP: TexturePool<TID>>(
         &'a mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         renderpass: &mut wgpu::RenderPass<'a>,
         shaders: &SP,
         textures: &TP,
+        geo_buffers: &'a mut GBP,
     ) {
         let shader = self.shader;
         let last_texture_key = self.last_texture_key;
@@ -176,7 +186,7 @@ impl<TID: TextureID> PolygonBatcher<TID> {
                 self.vertices_length = 0;
                 self.indices_length = 0;
                 let mesh = self.meshes.get_mut(self.draw_calls).unwrap();
-                mesh.draw(device, queue, renderpass, shaders, textures);
+                mesh.draw(device, queue, renderpass, shaders, textures, geo_buffers);
             }
         }
     }

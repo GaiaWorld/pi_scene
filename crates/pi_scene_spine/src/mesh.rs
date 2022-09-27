@@ -1,21 +1,15 @@
-use pi_scene_data_container::{TextureID, TVertexBufferKindKey, TexturePool};
-use pi_scene_geometry::{vertex_data::EVertexDataFormat};
+use pi_scene_data_container::{TextureID, TVertexBufferKindKey, TexturePool, TGeometryBufferID, GeometryBufferPool, GeometryBuffer, EVertexDataFormat};
+use pi_scene_geometry::{geometry::Geometry};
 use pi_scene_material::{material::{Material, UniformKindFloat4, UniformKindMat4}};
 use wgpu::util::DeviceExt;
 
 use crate::{MAX_VERTICES, error::ESpineError, vec_set, pipeline::SpinePipelinePool, material::{TSpineMaterialUpdate, SpineMaterialColored, SpineMaterialBlockKindKey, SpineVertexBufferKindKey, SpineMaterialColoredTextured, SpineMaterialColoredTexturedTwo}, shaders::{EShader, SpineShaderPool}};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum EMeshKind {
-    Vertices,
-    Indices,
-}
 
-impl TVertexBufferKindKey for EMeshKind {}
-
-pub struct Mesh<TID: TextureID> {
+pub struct Mesh<GBID: TGeometryBufferID, TID: TextureID> {
     shader: Option<EShader>,
     material: Material<SpineVertexBufferKindKey, SpineMaterialBlockKindKey, TID>,
+    geometry: Geometry<SpineVertexBufferKindKey, GBID>,
     vertices: Vec<f32>,
     indices: Vec<u16>,
     attributes: Vec<VertexAttribute>,
@@ -25,16 +19,19 @@ pub struct Mesh<TID: TextureID> {
     dirty_indices: bool,
     vertices_length: u32,
     indices_length: u32,
-    vertices_buffer: Option<wgpu::Buffer>,
-    indices_buffer: Option<wgpu::Buffer>,
     element_per_vertex: u32,
+    vertices_buffer_id: Option<GBID>,
+    indices_buffer_id: Option<GBID>,
+    max_vertices: usize,
+    max_indices: usize,
 }
 
-impl<TID: TextureID> Mesh<TID> {
+impl<GBID: TGeometryBufferID, TID: TextureID> Mesh<GBID, TID> {
     pub fn new() -> Self {
         Self {
             shader: None,
             material: Material::default(),
+            geometry: Geometry::default(),
             vertices: vec![],
             indices: vec![],
             attributes: vec![],
@@ -44,12 +41,20 @@ impl<TID: TextureID> Mesh<TID> {
             dirty_indices: false,
             vertices_length: 0,
             indices_length: 0,
-            vertices_buffer: None,
-            indices_buffer: None,
             element_per_vertex: 0,
+            vertices_buffer_id: None,
+            indices_buffer_id: None,
+            max_vertices: 0,
+            max_indices: 0,
         }
     }
-    pub fn init<SP: SpineShaderPool>(&mut self, device: &wgpu::Device, shader: EShader, shader_pool: &SP) {
+    pub fn init<GBP: GeometryBufferPool<GBID>, SP: SpineShaderPool>(
+        &mut self, 
+        device: &wgpu::Device, 
+        shader: EShader, 
+        shader_pool: &SP,
+        geo_buffers: &mut GBP,
+    ) {
         match self.shader {
             Some(v) => {
                 if v != shader {
@@ -84,6 +89,7 @@ impl<TID: TextureID> Mesh<TID> {
                 ]
             },
         };
+
         let element_per_vertex = VertexAttribute::elements(&self.attributes);
         if element_per_vertex > self.element_per_vertex {
             self.num_vertices = MAX_VERTICES as u32 * element_per_vertex;
@@ -97,9 +103,32 @@ impl<TID: TextureID> Mesh<TID> {
                 self.indices.push(0);
             }
             // println!(">>>>>>>>>>>>>>>> 00 {}", self.indices.len());
-            self.vertices_buffer = None;
-            self.indices_buffer = None;
+            self.max_vertices = MAX_VERTICES as usize;
+            self.max_indices = MAX_VERTICES as usize * 3;
         }
+
+        self.vertices_buffer_id = match self.vertices_buffer_id {
+            Some(id) => Some(id),
+            None => Some(geo_buffers.insert(GeometryBuffer::new(true, EVertexDataFormat::F32, false))),
+        };
+        self.indices_buffer_id = match self.indices_buffer_id {
+            Some(id) => Some(id),
+            None => Some(geo_buffers.insert(GeometryBuffer::new(true, EVertexDataFormat::U16, true))),
+        };
+
+        self.geometry.reset();
+        self.geometry.set_indices(self.indices_buffer_id);
+        match shader {
+            EShader::Colored => {
+                self.geometry.set(EShader::VERTEX_COLORED, self.vertices_buffer_id);
+            },
+            EShader::ColoredTextured => {
+                self.geometry.set(EShader::VERTEX_COLORED_TEXTURED, self.vertices_buffer_id);
+            },
+            EShader::TwoColoredTextured => {
+                self.geometry.set(EShader::VERTEX_COLORED_TEXTURED_TWO, self.vertices_buffer_id);
+            },
+        };
         self.element_per_vertex = element_per_vertex;
         self.shader = Some(shader);
         self.dirty_vertices = false;
@@ -115,7 +144,7 @@ impl<TID: TextureID> Mesh<TID> {
     }
 
     pub fn max_vertices(&self) -> u32 {
-        self.vertices.len() as u32 / self.element_per_vertex() as u32
+        self.max_vertices as u32
     }
     pub fn num_vertices(&self) -> u32 {
         self.vertices_length / self.element_per_vertex()
@@ -132,7 +161,7 @@ impl<TID: TextureID> Mesh<TID> {
     }
 
     pub fn max_indices(&self) -> u32 {
-        self.indices.len() as u32
+        self.max_indices as u32
     }
     pub fn num_indices(&self) -> u32 {
         self.indices_length
@@ -157,60 +186,110 @@ impl<TID: TextureID> Mesh<TID> {
         size
     }
 
-    pub fn set_vertices(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, vertices: &[f32]) -> Result<(), ESpineError> {
+    pub fn set_vertices<GBP: GeometryBufferPool<GBID>>(
+        &mut self, 
+        device: &wgpu::Device, 
+        queue: &wgpu::Queue, 
+        vertices: &[f32],
+        geo_buffers: &mut GBP,
+    ) -> Result<(), ESpineError> {
         self.dirty_vertices = true;
-        if vertices.len() > self.vertices.len() {
-            // println!(">>>>>>>>>>>>>>>> V0");
-            Err(ESpineError::MeshCanntStoreMoreThanMaxVertices)
-        } else {
-            // println!(">>>>>>>>>>>>>>>> V1");
-            vec_set(&mut self.vertices, vertices, 0);
-            self.vertices_length = vertices.len() as u32;
-            if self.vertices_buffer.is_none() {
-                self.vertices_buffer = Some(device.create_buffer_init(
-                    &wgpu::util::BufferInitDescriptor {
-                        label: None,
-                        contents: bytemuck::cast_slice(&self.vertices),
-                        usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-                    }
-                ));
-            } else {
-                queue.write_buffer(self.vertices_buffer.as_ref().unwrap(), 0, bytemuck::cast_slice(&self.vertices));
-            }
-            Ok(())
+        // if vertices.len() > self.vertices.len() {
+        //     // println!(">>>>>>>>>>>>>>>> V0");
+        //     Err(ESpineError::MeshCanntStoreMoreThanMaxVertices)
+        // } else {
+        //     // println!(">>>>>>>>>>>>>>>> V1");
+        //     vec_set(&mut self.vertices, vertices, 0);
+        //     self.vertices_length = vertices.len() as u32;
+        //     if self.vertices_buffer.is_none() {
+        //         self.vertices_buffer = Some(device.create_buffer_init(
+        //             &wgpu::util::BufferInitDescriptor {
+        //                 label: None,
+        //                 contents: bytemuck::cast_slice(&self.vertices),
+        //                 usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+        //             }
+        //         ));
+        //     } else {
+        //         queue.write_buffer(self.vertices_buffer.as_ref().unwrap(), 0, bytemuck::cast_slice(&self.vertices));
+        //     }
+        //     Ok(())
+        // }
+
+        match self.vertices_buffer_id {
+            Some(id) => {
+                match geo_buffers.get_mut(&id) {
+                    Some(geo) => {
+                        geo.reset();
+                        geo.update_f32(vertices, 0);
+                        geo.update_buffer(device, queue);
+                        Ok(())
+                    },
+                    None => todo!(),
+                }
+            },
+            None => todo!(),
         }
     }
 
-    pub fn set_indices(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, indices: &[u16]) -> Result<(), ESpineError> {
+    pub fn set_indices<GBP: GeometryBufferPool<GBID>>(
+        &mut self, 
+        device: &wgpu::Device, 
+        queue: &wgpu::Queue, 
+        indices: &[u16],
+        geo_buffers: &mut GBP,
+    ) -> Result<(), ESpineError> {
         self.dirty_indices = true;
-        if indices.len() > self.indices.len() {
-            // println!(">>>>>>>>>>>>>>>> I0");
-            Err(ESpineError::MeshCanntStoreMoreThanMaxVertices)
-        } else {
-            // println!(">>>>>>>>>>>>>>>> I1");
-            vec_set(&mut self.indices, indices, 0);
-            self.indices_length = indices.len() as u32;
-            if self.indices_buffer.is_none() {
-                self.indices_buffer = Some(device.create_buffer_init(
-                    &wgpu::util::BufferInitDescriptor {
-                        label: None,
-                        contents: bytemuck::cast_slice(&self.indices),
-                        usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-                    }
-                ));
-            } else {
-                queue.write_buffer(self.indices_buffer.as_ref().unwrap(), 0, bytemuck::cast_slice(&self.indices));
-            }
-            Ok(())
+        // if indices.len() > self.indices.len() {
+        //     // println!(">>>>>>>>>>>>>>>> I0");
+        //     Err(ESpineError::MeshCanntStoreMoreThanMaxVertices)
+        // } else {
+        //     // println!(">>>>>>>>>>>>>>>> I1");
+        //     vec_set(&mut self.indices, indices, 0);
+        //     self.indices_length = indices.len() as u32;
+        //     if self.indices_buffer.is_none() {
+        //         self.indices_buffer = Some(device.create_buffer_init(
+        //             &wgpu::util::BufferInitDescriptor {
+        //                 label: None,
+        //                 contents: bytemuck::cast_slice(&self.indices),
+        //                 usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+        //             }
+        //         ));
+        //     } else {
+        //         queue.write_buffer(self.indices_buffer.as_ref().unwrap(), 0, bytemuck::cast_slice(&self.indices));
+        //     }
+        //     Ok(())
+        // }
+        
+        match self.indices_buffer_id {
+            Some(id) => {
+                match geo_buffers.get_mut(&id) {
+                    Some(geo) => {
+                        geo.reset();
+                        geo.update_u16(indices, 0);
+                        geo.update_buffer(device, queue);
+                        Ok(())
+                    },
+                    None => todo!(),
+                }
+            },
+            None => todo!(),
         }
     }
 
-    pub fn draw<'a, SP: SpineShaderPool, TP: TexturePool<TID>>(&'a self, device: &wgpu::Device, queue: &wgpu::Queue, renderpass: &mut wgpu::RenderPass<'a>, shaders: &SP, textures: &TP) {
-        let bind_groups = self.material.bind_groups(renderpass);
+    pub fn draw<'a, SP: SpineShaderPool, GBP: GeometryBufferPool<GBID>, TP: TexturePool<TID>>(
+        &'a self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        renderpass: &mut wgpu::RenderPass<'a>,
+        shaders: &SP,
+        textures: &TP,
+        geo_buffers: &'a GBP,
+    ) {
+        self.material.draw(renderpass, &self.geometry, geo_buffers);
         // println!(">>>>>>>>>>>>>>>> {} >>>>> {}", self.indices_length, self.vertices_length);
-        renderpass.set_vertex_buffer(0, self.vertices_buffer.as_ref().unwrap().slice(..));
-        renderpass.set_index_buffer(self.indices_buffer.as_ref().unwrap().slice(..), wgpu::IndexFormat::Uint16);
-        renderpass.draw_indexed(0..self.indices_length, 0, 0..1);
+        // renderpass.set_vertex_buffer(0, self.vertices_buffer.as_ref().unwrap().slice(..));
+        // renderpass.set_index_buffer(self.indices_buffer.as_ref().unwrap().slice(..), wgpu::IndexFormat::Uint16);
+        // renderpass.draw_indexed(0..self.indices_length, 0, 0..1);
     }
 
     pub fn draw_with_offset(&self) {
