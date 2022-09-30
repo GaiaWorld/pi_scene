@@ -1,4 +1,4 @@
-use pi_scene_pipeline_key::pipeline_key::PipelineKey;
+use render_pipeline_key::pipeline_key::PipelineKey;
 
 
 pub struct PipelineSimple {

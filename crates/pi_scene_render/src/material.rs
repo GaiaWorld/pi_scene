@@ -1,7 +1,7 @@
 use pi_hash::XHashMap;
-use pi_scene_data_container::{TVertexBufferKindKey, TMaterialBlockKindKey, TextureID};
-use pi_scene_material::{material::Material};
-use pi_scene_pipeline_key::pipeline_key::PipelineKey;
+use render_data_container::{TVertexBufferKindKey, TMaterialBlockKindKey, TextureID};
+use render_material::{material::Material};
+use render_pipeline_key::pipeline_key::PipelineKey;
 
 use crate::pipeline::{PipelineSimple};
 

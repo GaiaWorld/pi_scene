@@ -1,8 +1,7 @@
-
-use pi_scene_geometry::{geometry::Geometry, };
-use pi_scene_data_container::{TMaterialBlockKindKey, TextureID, TVertexBufferKindKey, TGeometryBufferID, };
-use pi_scene_material::material::Material;
+use render_data_container::{TVertexBufferKindKey, TMaterialBlockKindKey, TGeometryBufferID, TextureID};
 use pi_scene_math::Matrix;
+use render_geometry::geometry::Geometry;
+use render_material::material::Material;
 
 
 pub struct Mesh<VBK: TVertexBufferKindKey, MBKK: TMaterialBlockKindKey, GBID: TGeometryBufferID, TID: TextureID> {

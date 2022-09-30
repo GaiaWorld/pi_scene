@@ -12,9 +12,9 @@ keywords = ["scene control"]
 approx = "0.5"
 pi_slotmap = "0.1"
 pi_scene_math = { path = "../pi_scene_math" }
-pi_scene_data_container = { path = "../pi_scene_data_container" }
-pi_scene_geometry = { path = "../pi_scene_geometry" }
-pi_scene_material = { path = "../pi_scene_material" }
+render_data_container = { git = "https://github.com/GaiaWorld/pi_render" }
+render_geometry = { git = "https://github.com/GaiaWorld/pi_render" }
+render_material = { git = "https://github.com/GaiaWorld/pi_render" }
 pi_animation = { git = "https://github.com/GaiaWorld/pi_animation" }
 
 parry3d = "0.9.0"
@@ -24,5 +24,8 @@ ncollide3d = "0.27.0"
 
 [patch."https://github.com/GaiaWorld/pi_animation"]
 pi_animation = { path = "../../../pi_animation" }
+
+[patch."https://github.com/GaiaWorld/pi_render"]
+pi_render = { path = "../../../pi_render" }
 
 # [[example]]
