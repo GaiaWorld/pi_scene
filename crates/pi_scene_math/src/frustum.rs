@@ -9,6 +9,12 @@ pub struct FrustumPlanes {
     pub bottom: Plane,
 }
 
+impl Default for FrustumPlanes {
+    fn default() -> Self {
+        Self { near: Plane::default(), far: Plane::default(), left: Plane::default(), right: Plane::default(), top: Plane::default(), bottom: Plane::default() }
+    }
+}
+
 impl FrustumPlanes {
     pub fn from_transform_matrix(&mut self, transform: &Matrix) {
         // Near

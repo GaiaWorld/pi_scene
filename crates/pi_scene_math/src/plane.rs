@@ -5,6 +5,12 @@ pub struct Plane {
     pub d: Number,
 }
 
+impl Default for Plane {
+    fn default() -> Self {
+        Self { normal: Vector3::new(0., 1., 0.), d: 1. }
+    }
+}
+
 impl Plane {
     pub fn from_points(&mut self, p1: &Vector3, p2: &Vector3, p3: &Vector3) {}
     pub fn from_point_and_normal(&mut self, origin: &Vector3, normal: &Vector3) {}
