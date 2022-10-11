@@ -1,6 +1,6 @@
 use nalgebra::{clamp, ComplexField};
 
-use crate::{vector::{TToolVector3, TToolMatrix, TToolRotation}, Vector3, Number, Matrix, Quaternion, Affine3, Rotation3};
+use crate::{vector::{TToolVector3, TToolMatrix, TToolRotation}, Vector3, Number, Matrix, Quaternion, Affine3, Rotation3, Vector4};
 
 
 #[derive(Debug, Clone, Copy)]
@@ -231,6 +231,24 @@ impl TToolMatrix for CoordinateSytem3 {
                 return true;
             }
         }
+    }
+
+    fn rotation_align_to(from: &Vector3, to: &Vector3, result: &mut Matrix) {
+        let v: Vector3 = to.cross(from);
+        let c = to.dot(from);
+        let k = 1. / (1. + c);
+
+        result.copy_from(&Matrix::identity());
+
+        let m_00: Number = v.x * v.x * k + c;       let m_01: Number = v.y * v.x * k - v.z;     let m_02: Number = v.z * v.x * k + v.y;     let m_03: Number = 0.;
+        let m_04: Number = v.x * v.y * k + v.z;     let m_05: Number = v.y * v.y * k + c;       let m_06: Number = v.z * v.y * k - v.x;     let m_07: Number = 0.;
+        let m_08: Number = v.x * v.z * k - v.y;     let m_09: Number = v.y * v.z * k + v.x;     let m_10: Number = v.z * v.z * k + c;       let m_11: Number = 0.;
+        let m_12: Number = 0.;                      let m_13: Number = 0.;                      let m_14: Number = 0.;                      let m_15: Number = 1.;
+
+        result.set_column(0, &Vector4::new(m_00, m_04, m_08, m_12));
+        result.set_column(1, &Vector4::new(m_01, m_05, m_09, m_13));
+        result.set_column(2, &Vector4::new(m_02, m_06, m_10, m_14));
+        result.set_column(3, &Vector4::new(m_03, m_07, m_11, m_15));
     }
 }
 
