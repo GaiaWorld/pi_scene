@@ -1,6 +1,6 @@
 use nalgebra::{clamp, ComplexField};
 
-use crate::{vector::{TToolVector3, TToolMatrix, TToolRotation}, Vector3, Number, Matrix, Quaternion, Affine3, Rotation3, Vector4};
+use crate::{vector::{TToolVector3, TToolMatrix, TToolRotation}, Vector3, Number, Matrix, Quaternion, Affine3, Rotation3, Vector4, Point3};
 
 
 #[derive(Debug, Clone, Copy)]
@@ -249,6 +249,17 @@ impl TToolMatrix for CoordinateSytem3 {
         result.set_column(1, &Vector4::new(m_01, m_05, m_09, m_13));
         result.set_column(2, &Vector4::new(m_02, m_06, m_10, m_14));
         result.set_column(3, &Vector4::new(m_03, m_07, m_11, m_15));
+    }
+
+    fn lookat(&self, eye: &Vector3, target: &Vector3, up: &Vector3, result: &mut Matrix) {
+        let eye = Point3::from_slice(eye.as_slice());
+        let target = Point3::from_slice(target.as_slice());
+
+        match self.mode {
+            ECoordinateSytem3::Left => { result.copy_from(&Matrix::look_at_lh(&eye, &target, up)); },
+            ECoordinateSytem3::Right => { result.copy_from(&Matrix::look_at_rh(&eye, &target, up)); },
+        }
+        
     }
 }
 

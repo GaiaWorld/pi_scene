@@ -97,4 +97,5 @@ pub trait TToolMatrix {
     fn matrix4_compose_euler_angle(scaling: &Vector3, eulers: &Vector3, translation: &Vector3, result: &mut Matrix);
     fn matrix4_compose_rotation(scaling: &Vector3, rotmat: &Rotation3, translation: &Vector3, result: &mut Matrix);
     fn rotation_align_to(from: &Vector3, to: &Vector3, result: &mut Matrix);
+    fn lookat(&self, eye: &Vector3, target: &Vector3, up: &Vector3, result: &mut Matrix);
 }
