@@ -1,6 +1,6 @@
 use std::ops::IndexMut;
 
-use crate::{Number, Vector3, Matrix, Quaternion, Rotation3};
+use crate::{Number, Vector3, Matrix, Quaternion, Rotation3, Isometry3};
 
 pub trait TMinimizeMaximize {
     /// 取得两个数据结构中 每个分量的最小值的集合
@@ -97,5 +97,5 @@ pub trait TToolMatrix {
     fn matrix4_compose_euler_angle(scaling: &Vector3, eulers: &Vector3, translation: &Vector3, result: &mut Matrix);
     fn matrix4_compose_rotation(scaling: &Vector3, rotmat: &Rotation3, translation: &Vector3, result: &mut Matrix);
     fn rotation_align_to(from: &Vector3, to: &Vector3, result: &mut Matrix);
-    fn lookat(&self, eye: &Vector3, target: &Vector3, up: &Vector3, result: &mut Matrix);
+    fn lookat(&self, eye: &Vector3, target: &Vector3, up: &Vector3, result: &mut Isometry3);
 }
