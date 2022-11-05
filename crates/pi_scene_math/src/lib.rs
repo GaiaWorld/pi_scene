@@ -5,6 +5,7 @@ pub mod vector;
 pub mod plane;
 pub mod frustum;
 pub mod transform;
+pub mod camera;
 
 use nalgebra::{RealField, Vector2 as NVector2, Vector3 as NVector3, Dim, SimdValue, Vector4 as NVector4, UnitQuaternion as NQuaternion, 
     Matrix4 as NMatrix4, SimilarityMatrix3 as NSimilarityMatrix3, Translation3 as NTranslation3, Transform3 as NTransform3,

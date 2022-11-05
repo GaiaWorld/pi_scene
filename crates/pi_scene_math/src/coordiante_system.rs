@@ -172,6 +172,7 @@ impl TToolMatrix for CoordinateSytem3 {
         affine.append_translation_mut(translation);
 
         affine.mul_to(&rotmat.to_homogeneous(), result);
+        // rotmat.to_homogeneous().mul_to(&affine, result);
     }
 
     fn matrix4_decompose_rotation(m: &Matrix, scaling: Option<&mut Vector3>, rotation: Option<&mut Rotation3>, translation: Option<&mut Vector3>) -> bool {
@@ -278,36 +279,39 @@ impl TToolRotation for CoordinateSytem3 {
 
     fn quaternion_to_euler_angles(&self, quaternion: &Quaternion, result: &mut Vector3) {
         let (z, x, y) = quaternion.euler_angles();
-        match self.mode {
-            ECoordinateSytem3::Left => {
-                result.copy_from_slice(&[-x, -y, -z]);
-            },
-            ECoordinateSytem3::Right => {
-                result.copy_from_slice(&[x, y, z]);
-            },
-        }
+        // match self.mode {
+        //     ECoordinateSytem3::Left => {
+        //         result.copy_from_slice(&[-x, -y, -z]);
+        //     },
+        //     ECoordinateSytem3::Right => {
+        //         result.copy_from_slice(&[x, y, z]);
+        //     },
+        // }
+        result.copy_from_slice(&[x, y, z]);
     }
 
     fn rotation_matrix_from_euler_angles(&self, x: Number, y: Number, z: Number) -> Rotation3 {
-        match self.mode {
-            ECoordinateSytem3::Left => {
-                Rotation3::from_euler_angles(-x, -y, -z)
-            },
-            ECoordinateSytem3::Right => {
-                Rotation3::from_euler_angles(x, y, z)
-            },
-        }
+        // match self.mode {
+        //     ECoordinateSytem3::Left => {
+        //         Rotation3::from_euler_angles(-x, -y, -z)
+        //     },
+        //     ECoordinateSytem3::Right => {
+        //         Rotation3::from_euler_angles(x, y, z)
+        //     },
+        // }
+        Rotation3::from_euler_angles(x, y, z)
     }
 
     fn rotation_matrix_mut_yaw_pitch_roll(&self, yaw: Number, pitch: Number, roll: Number, result: &mut Rotation3) {
-        match self.mode {
-            ECoordinateSytem3::Left => {
-                result.clone_from(&Rotation3::from_euler_angles(-roll, -pitch, -yaw));
-            },
-            ECoordinateSytem3::Right => {
-                result.clone_from(&Rotation3::from_euler_angles(roll, pitch, yaw));
-            },
-        }
+        // match self.mode {
+        //     ECoordinateSytem3::Left => {
+        //         result.clone_from(&Rotation3::from_euler_angles(-roll, -pitch, -yaw));
+        //     },
+        //     ECoordinateSytem3::Right => {
+        //         result.clone_from(&Rotation3::from_euler_angles(roll, pitch, yaw));
+        //     },
+        // }
+        result.clone_from(&Rotation3::from_euler_angles(roll, pitch, yaw));
     }
 
     fn rotation_matrix_mut_axis(&self, axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Rotation3) {
@@ -316,14 +320,15 @@ impl TToolRotation for CoordinateSytem3 {
 
     fn rotation_matrix_to_euler_angles(&self, rotation: &Rotation3, result: &mut Vector3) {
         let (z, x, y) = rotation.euler_angles();
-        match self.mode {
-            ECoordinateSytem3::Left => {
-                result.copy_from_slice(&[-x, -y, -z]);
-            },
-            ECoordinateSytem3::Right => {
-                result.copy_from_slice(&[x, y, z]);
-            },
-        }
+        // match self.mode {
+        //     ECoordinateSytem3::Left => {
+        //         result.copy_from_slice(&[-x, -y, -z]);
+        //     },
+        //     ECoordinateSytem3::Right => {
+        //         result.copy_from_slice(&[x, y, z]);
+        //     },
+        // }
+        result.copy_from_slice(&[x, y, z]);
     }
 
     fn quaternion_mut_euler_angles(&self, x: Number, y: Number, z: Number, result: &mut Quaternion) {

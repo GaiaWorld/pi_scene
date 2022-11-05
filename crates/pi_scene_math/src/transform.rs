@@ -96,6 +96,7 @@ impl Transform3 {
             affine.append_nonuniform_scaling_mut(&self.scaling);
             affine.append_translation_mut(&self.translation);
             affine.mul_to(&self.rotation.to_homogeneous(), &mut self.local_matrix);
+            // self.rotation.to_homogeneous().mul_to(&affine, &mut self.local_matrix);
         }
 
         self.dirty = false;
