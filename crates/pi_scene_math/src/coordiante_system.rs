@@ -1,4 +1,4 @@
-use nalgebra::{clamp, ComplexField};
+use nalgebra::{clamp, ComplexField, Matrix3, SimdComplexField};
 
 use crate::{vector::{TToolVector3, TToolMatrix, TToolRotation}, Vector3, Number, Matrix, Quaternion, Affine3, Rotation3, Vector4, Point3, Isometry3};
 
@@ -186,7 +186,7 @@ impl TToolMatrix for CoordinateSytem3 {
                 scaling.x = 1.; scaling.y = 1.; scaling.z = 1.; 
             }
             if let Some(rotation) =  rotation {
-                rotation.clone_from(&Rotation3::from_euler_angles(0., 0., 0.));
+                rotation.clone_from(&Self::rotation_matrix_from_euler_angles(0., 0., 0.));
             }
 
             return true;
@@ -265,12 +265,12 @@ impl TToolMatrix for CoordinateSytem3 {
 }
 
 impl TToolRotation for CoordinateSytem3 {
-    fn quaternion_from_euler_angles(&self, x: Number, y: Number, z: Number) -> Quaternion {
-        Quaternion::from_rotation_matrix(&self.rotation_matrix_from_euler_angles(x, y, z))
+    fn quaternion_from_euler_angles(x: Number, y: Number, z: Number) -> Quaternion {
+        Quaternion::from_rotation_matrix(&Self::rotation_matrix_from_euler_angles(x, y, z))
     }
 
     fn quaternion_mut_yaw_pitch_roll(&self, yaw: Number, pitch: Number, roll: Number, result: &mut Quaternion) {
-        result.clone_from(&Quaternion::from_rotation_matrix(&self.rotation_matrix_from_euler_angles(yaw, pitch, roll)));
+        result.clone_from(&Quaternion::from_rotation_matrix(&Self::rotation_matrix_from_euler_angles(yaw, pitch, roll)));
     }
 
     fn quaternion_mut_axis(&self, axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Quaternion) {
@@ -290,7 +290,7 @@ impl TToolRotation for CoordinateSytem3 {
         result.copy_from_slice(&[x, y, z]);
     }
 
-    fn rotation_matrix_from_euler_angles(&self, x: Number, y: Number, z: Number) -> Rotation3 {
+    fn rotation_matrix_from_euler_angles(x: Number, y: Number, z: Number) -> Rotation3 {
         // match self.mode {
         //     ECoordinateSytem3::Left => {
         //         Rotation3::from_euler_angles(-x, -y, -z)
@@ -299,7 +299,26 @@ impl TToolRotation for CoordinateSytem3 {
         //         Rotation3::from_euler_angles(x, y, z)
         //     },
         // }
-        Rotation3::from_euler_angles(x, y, z)
+
+        // Rotation3::from_euler_angles(x, y, z)
+        
+        let (sr, cr) = x.simd_sin_cos();
+        let (sp, cp) = y.simd_sin_cos();
+        let (sy, cy) = z.simd_sin_cos();
+
+        Rotation3::from_matrix_unchecked(Matrix3::from_column_slice(
+            &[
+                cy.clone() * cp.clone(),
+                cy.clone() * sp.clone() * sr.clone() - sy.clone() * cr.clone(),
+                cy.clone() * sp.clone() * cr.clone() + sy.clone() * sr.clone(),
+                sy.clone() * cp.clone(),
+                sy.clone() * sp.clone() * sr.clone() + cy.clone() * cr.clone(),
+                sy * sp.clone() * cr.clone() - cy * sr.clone(),
+                -sp,
+                cp.clone() * sr,
+                cp * cr,
+            ]
+        ))
     }
 
     fn rotation_matrix_mut_yaw_pitch_roll(&self, yaw: Number, pitch: Number, roll: Number, result: &mut Rotation3) {
@@ -331,11 +350,11 @@ impl TToolRotation for CoordinateSytem3 {
         result.copy_from_slice(&[x, y, z]);
     }
 
-    fn quaternion_mut_euler_angles(&self, x: Number, y: Number, z: Number, result: &mut Quaternion) {
-        result.clone_from(&self.quaternion_from_euler_angles(x, y, z));
+    fn quaternion_mut_euler_angles(x: Number, y: Number, z: Number, result: &mut Quaternion) {
+        result.clone_from(&Self::quaternion_from_euler_angles(x, y, z));
     }
 
-    fn rotation_matrix_mut_euler_angles(&self, x: Number, y: Number, z: Number, result: &mut Rotation3) {
-        result.clone_from(&self.rotation_matrix_from_euler_angles(x, y, z));
+    fn rotation_matrix_mut_euler_angles(x: Number, y: Number, z: Number, result: &mut Rotation3) {
+        result.clone_from(&Self::rotation_matrix_from_euler_angles(x, y, z));
     }
 }

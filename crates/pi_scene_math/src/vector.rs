@@ -69,8 +69,8 @@ pub trait TToolRotation {
     /// * `x` Pitch
     /// * `y` Yaw
     /// * `z` Roll
-    fn quaternion_from_euler_angles(&self, x: Number, y: Number, z: Number) -> Quaternion;
-    fn quaternion_mut_euler_angles(&self, x: Number, y: Number, z: Number, result: &mut Quaternion);
+    fn quaternion_from_euler_angles(x: Number, y: Number, z: Number) -> Quaternion;
+    fn quaternion_mut_euler_angles(x: Number, y: Number, z: Number, result: &mut Quaternion);
     
     /// * `x` Pitch
     /// * `y` Yaw
@@ -78,8 +78,8 @@ pub trait TToolRotation {
     fn quaternion_mut_yaw_pitch_roll(&self, yaw: Number, pitch: Number, roll: Number, result: &mut Quaternion);
     fn quaternion_mut_axis(&self, axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Quaternion);
     fn quaternion_to_euler_angles(&self, rotation: &Quaternion, result: &mut Vector3);
-    fn rotation_matrix_from_euler_angles(&self, x: Number, y: Number, z: Number) -> Rotation3;
-    fn rotation_matrix_mut_euler_angles(&self, x: Number, y: Number, z: Number, result: &mut Rotation3);
+    fn rotation_matrix_from_euler_angles(x: Number, y: Number, z: Number) -> Rotation3;
+    fn rotation_matrix_mut_euler_angles(x: Number, y: Number, z: Number, result: &mut Rotation3);
     
     /// * `x` Pitch
     /// * `y` Yaw

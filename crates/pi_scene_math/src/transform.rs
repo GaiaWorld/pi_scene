@@ -85,7 +85,7 @@ impl Transform3 {
     }
     pub fn set_rotation_from_euler_angles(&mut self, x: Number, y: Number, z: Number, coord: &CoordinateSytem3) {
         self.dirty = true;
-        coord.rotation_matrix_mut_euler_angles(x, y, z, &mut self.rotation);
+        CoordinateSytem3::rotation_matrix_mut_euler_angles(x, y, z, &mut self.rotation);
     }
     pub fn matrix(&self) -> &Matrix {
         &self.local_matrix
