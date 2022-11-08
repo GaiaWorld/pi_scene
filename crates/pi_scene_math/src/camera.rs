@@ -54,7 +54,7 @@ impl TOrthographicCameraTool for CoordinateSytem3 {
         let i0 = (left + right) / (left - right);
         let i1 = (top + bottom) / (bottom - top);
 
-        let mut result = Matrix::from_row_slice(&[
+        let mut result = Matrix::from_column_slice(&[
             a, 0.0, 0.0, 0.0,
             0.0, b, 0.0, 0.0,
             0.0, 0.0, c, 0.0,
@@ -113,7 +113,7 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
         let c = (f + n) / (f - n);
         let d = -2.0 * f * n / (f - n);
 
-        let result = Matrix::from_row_slice(&[
+        let result = Matrix::from_column_slice(&[
             a, 0.0, 0.0, 0.0,
             0.0, b, 0.0, 0.0,
             0.0, 0.0, -znear, -1.0,
@@ -139,7 +139,7 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
         let c = -(f + n) / (f - n);
         let d = -2.0 * f * n / (f - n);
         
-        let result = Matrix::from_row_slice(&[
+        let result = Matrix::from_column_slice(&[
             a, 0.0, 0.0, 0.0,
             0.0, b, 0.0, 0.0,
             0.0, 0.0, c, -1.0,
@@ -165,7 +165,7 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
         let c = (f + n) / (f - n);
         let d = -2.0 * f * n / (f - n);
 
-        let result = Matrix::from_row_slice(&[
+        let result = Matrix::from_column_slice(&[
             a, 0.0, 0.0, 0.0,
             0.0, b, 0.0, 0.0,
             0.0, 0.0, -znear, 1.0,
@@ -191,7 +191,7 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
         let c = (f + n) / (f - n);
         let d = -2.0 * f * n / (f - n);
 
-        let result = Matrix::from_row_slice(&[
+        let result = Matrix::from_column_slice(&[
             a, 0.0, 0.0, 0.0,
             0.0, b, 0.0, 0.0,
             0.0, 0.0, c, 1.0,
