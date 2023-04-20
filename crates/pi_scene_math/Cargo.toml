@@ -10,7 +10,7 @@ keywords = ["scene render"]
 
 [dependencies]
 approx = "0.5"
-nalgebra = "0.30"
+nalgebra = "0.32"
 pi_animation = { git = "https://github.com/GaiaWorld/pi_animation" }
 
 [patch."https://github.com/GaiaWorld/pi_animation"]
