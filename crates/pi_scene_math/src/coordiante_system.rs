@@ -178,7 +178,7 @@ impl TToolMatrix for CoordinateSytem3 {
     fn matrix4_decompose_rotation(m: &Matrix, scaling: Option<&mut Vector3>, rotation: Option<&mut Rotation3>, translation: Option<&mut Vector3>) -> bool {
         // todo!()
         if let Some(translation) = translation {
-            translation.copy_from(&m.fixed_slice::<3, 1>(0, 3));
+            translation.copy_from(&m.fixed_view::<3, 1>(0, 3));
         }
 
         if m.is_identity(Number::EPSILON) {
