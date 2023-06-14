@@ -142,7 +142,12 @@ impl TToolMatrix for CoordinateSytem3 {
     }
 
     fn matrix4_from_xyz_axes(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Matrix) {
-        // todo!()
+        result.copy_from_slice(&[
+            axis1.x, axis1.y, axis1.z, 0.,
+            axis2.x, axis2.y, axis2.z, 0.,
+            axis3.x, axis3.y, axis3.z, 0.,
+                 0.,      0.,      0., 1.,
+        ]);
     }
 
     fn matrix4_decompose(m: &Matrix, scaling: Option<&mut Vector3>, quaternion: Option<&mut Quaternion>, translation: Option<&mut Vector3>) -> bool {
@@ -357,4 +362,16 @@ impl TToolRotation for CoordinateSytem3 {
     fn rotation_matrix_mut_euler_angles(x: Number, y: Number, z: Number, result: &mut Rotation3) {
         result.clone_from(&Self::rotation_matrix_from_euler_angles(x, y, z));
     }
+    ///
+    /// 会卡死原因未知
+    fn rotation_matrix_from_axises(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3) -> Rotation3 {
+        let mut m = Matrix3::identity();
+        m.copy_from_slice(&[
+            axis1.x, axis1.y, axis1.z,
+            axis2.x, axis2.y, axis2.z,
+            axis3.x, axis3.y, axis3.z,
+        ]);
+        return Rotation3::from_matrix(&m);
+    }
+
 }

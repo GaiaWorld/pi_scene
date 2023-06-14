@@ -80,6 +80,7 @@ pub trait TToolRotation {
     fn quaternion_to_euler_angles(&self, rotation: &Quaternion, result: &mut Vector3);
     fn rotation_matrix_from_euler_angles(x: Number, y: Number, z: Number) -> Rotation3;
     fn rotation_matrix_mut_euler_angles(x: Number, y: Number, z: Number, result: &mut Rotation3);
+    fn rotation_matrix_from_axises(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3) -> Rotation3;
     
     /// * `x` Pitch
     /// * `y` Yaw
