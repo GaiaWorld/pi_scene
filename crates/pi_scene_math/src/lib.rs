@@ -7,14 +7,14 @@ pub mod frustum;
 pub mod transform;
 pub mod camera;
 
-use nalgebra::{RealField, Vector2 as NVector2, Vector3 as NVector3, Dim, SimdValue, Vector4 as NVector4, UnitQuaternion as NQuaternion, 
+use nalgebra::{RealField, Vector2 as NVector2, Vector3 as NVector3, Dim, SimdValue, Vector4 as NVector4, UnitQuaternion as NQuaternion,  
     Matrix4 as NMatrix4, SimilarityMatrix3 as NSimilarityMatrix3, Translation3 as NTranslation3, Transform3 as NTransform3,
     Affine3 as NAffine3, Projective3 as NProjective3, Isometry3 as NIsometry3, Rotation3 as NRotation3,
     Matrix2 as NMatrix2, Point3 as NPoint3, Perspective3 as NPerspective3, Orthographic3 as NOrthographic3
 };
+pub use nalgebra::{Quaternion as SQuaternion};
 
 pub type Number = f32;
-
 pub type Vector2 = NVector2<Number>;
 pub type Vector3 = NVector3<Number>;
 pub type Vector4 = NVector4<Number>;
