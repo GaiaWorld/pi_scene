@@ -278,6 +278,21 @@ impl TToolRotation for CoordinateSytem3 {
         result.clone_from(&Quaternion::from_rotation_matrix(&Self::rotation_matrix_from_euler_angles(yaw, pitch, roll)));
     }
 
+    fn quaternion_from_unit_vector(axis: &nalgebra::Unit<Vector3>, vec_to: &Vector3) -> Quaternion {
+        let r = Vector3::dot(axis, vec_to) + 1.0;
+        let quat = if r < f32::EPSILON {
+            if f32::abs(axis.x) > f32::abs(axis.z) {
+                nalgebra::Quaternion::new(0., -1.0 * axis.y, axis.x, 0.)
+            } else {
+                nalgebra::Quaternion::new(0., 0.0, -1.0 * axis.z, axis.y)
+            }
+        } else {
+            let temp = Vector3::cross(axis, vec_to);
+            nalgebra::Quaternion::new(r, temp.x, temp.y, temp.z)
+        };
+        Quaternion::from_quaternion(quat)
+    }
+
     fn quaternion_mut_axis(&self, axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Quaternion) {
         todo!()
     }
@@ -372,6 +387,16 @@ impl TToolRotation for CoordinateSytem3 {
             axis3.x, axis3.y, axis3.z,
         ]);
         return Rotation3::from_matrix(&m);
+    }
+    fn quaternion_from_axis_angle(axis1: &Vector3, radian: Number) -> Quaternion {
+        let (sin, cos) = f32::simd_sin_cos(radian / 2.);
+        let quat = nalgebra::Quaternion::new(
+            cos,
+            axis1.x * sin,
+            axis1.y * sin,
+            axis1.z * sin,
+        );
+        return Quaternion::from_quaternion(quat);
     }
 
 }

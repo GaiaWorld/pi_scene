@@ -1,5 +1,7 @@
 use std::ops::IndexMut;
 
+use nalgebra::UninitVector;
+
 use crate::{Number, Vector3, Matrix, Quaternion, Rotation3, Isometry3};
 
 pub trait TMinimizeMaximize {
@@ -71,6 +73,7 @@ pub trait TToolRotation {
     /// * `z` Roll
     fn quaternion_from_euler_angles(x: Number, y: Number, z: Number) -> Quaternion;
     fn quaternion_mut_euler_angles(x: Number, y: Number, z: Number, result: &mut Quaternion);
+    fn quaternion_from_unit_vector(axis: &nalgebra::Unit<Vector3>, vec_to: &Vector3) -> Quaternion;
     
     /// * `x` Pitch
     /// * `y` Yaw
@@ -81,6 +84,7 @@ pub trait TToolRotation {
     fn rotation_matrix_from_euler_angles(x: Number, y: Number, z: Number) -> Rotation3;
     fn rotation_matrix_mut_euler_angles(x: Number, y: Number, z: Number, result: &mut Rotation3);
     fn rotation_matrix_from_axises(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3) -> Rotation3;
+    fn quaternion_from_axis_angle(axis1: &Vector3, radian: Number) -> Quaternion;
     
     /// * `x` Pitch
     /// * `y` Yaw
