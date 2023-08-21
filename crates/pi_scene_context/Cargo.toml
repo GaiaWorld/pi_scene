@@ -12,9 +12,9 @@ keywords = ["scene control"]
 approx = "0.5"
 pi_slotmap = "0.1"
 pi_scene_math = { path = "../pi_scene_math" }
-render_data_container = { git = "https://github.com/GaiaWorld/pi_render" }
-render_geometry = { git = "https://github.com/GaiaWorld/pi_render" }
-render_material = { git = "https://github.com/GaiaWorld/pi_render" }
+render_data_container = {varsion = "0.1", registry = "yn"}
+render_geometry = {varsion = "0.1", registry = "yn"}
+render_material = {varsion = "0.1", registry = "yn"}
 pi_animation = { git = "https://github.com/GaiaWorld/pi_animation" }
 
 parry3d = "0.13"
