@@ -1,4 +1,3 @@
-use std::result;
 
 use crate::{Matrix, Number, coordiante_system::CoordinateSytem3};
 
@@ -54,7 +53,7 @@ impl TOrthographicCameraTool for CoordinateSytem3 {
         let i0 = (left + right) / (left - right);
         let i1 = (top + bottom) / (bottom - top);
 
-        let mut result = Matrix::from_column_slice(&[
+        let result = Matrix::from_column_slice(&[
             a, 0.0, 0.0, 0.0,
             0.0, b, 0.0, 0.0,
             0.0, 0.0, c, 0.0,
@@ -108,10 +107,10 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
         let f = zfar;
 
         let t = 1.0 / (Number::tan(fov * 0.5));
-        let a = if is_vertical_fixed { (t / aspect) } else { t };
-        let b = if is_vertical_fixed { t } else { (t * aspect) };
-        let c = (f + n) / (f - n);
-        let d = -2.0 * f * n / (f - n);
+        let a = if is_vertical_fixed { t / aspect } else { t };
+        let b = if is_vertical_fixed { t } else { t * aspect };
+        let _c = (f + n) / (f - n);
+        let _d = -2.0 * f * n / (f - n);
 
         let result = Matrix::from_column_slice(&[
             a, 0.0, 0.0, 0.0,
@@ -134,8 +133,8 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
         let f = zfar;
 
         let t = 1.0 / (Number::tan(fov * 0.5));
-        let a = if is_vertical_fixed { (t / aspect) } else { t };
-        let b = if is_vertical_fixed { t } else { (t * aspect) };
+        let a = if is_vertical_fixed { t / aspect } else { t };
+        let b = if is_vertical_fixed { t } else { t * aspect };
         let c = -(f + n) / (f - n);
         let d = -2.0 * f * n / (f - n);
         
@@ -160,10 +159,10 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
         let f = zfar;
 
         let t = 1.0 / (Number::tan(fov * 0.5));
-        let a = if is_vertical_fixed { (t / aspect) } else { t };
-        let b = if is_vertical_fixed { t } else { (t * aspect) };
-        let c = (f + n) / (f - n);
-        let d = -2.0 * f * n / (f - n);
+        let a = if is_vertical_fixed { t / aspect } else { t };
+        let b = if is_vertical_fixed { t } else { t * aspect };
+        let _c = (f + n) / (f - n);
+        let _d = -2.0 * f * n / (f - n);
 
         let result = Matrix::from_column_slice(&[
             a, 0.0, 0.0, 0.0,
@@ -186,8 +185,8 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
         let f = zfar;
 
         let t = 1.0 / (Number::tan(fov * 0.5));
-        let a = if is_vertical_fixed { (t / aspect) } else { t };
-        let b = if is_vertical_fixed { t } else { (t * aspect) };
+        let a = if is_vertical_fixed { t / aspect } else { t };
+        let b = if is_vertical_fixed { t } else { t * aspect };
         let c = (f + n) / (f - n);
         let d = -2.0 * f * n / (f - n);
 

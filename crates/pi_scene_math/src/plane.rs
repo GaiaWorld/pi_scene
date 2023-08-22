@@ -12,8 +12,8 @@ impl Default for Plane {
 }
 
 impl Plane {
-    pub fn from_points(&mut self, p1: &Vector3, p2: &Vector3, p3: &Vector3) {}
-    pub fn from_point_and_normal(&mut self, origin: &Vector3, normal: &Vector3) {}
+    pub fn from_points(&mut self, _p1: &Vector3, _p2: &Vector3, _p3: &Vector3) {}
+    pub fn from_point_and_normal(&mut self, _origin: &Vector3, _normal: &Vector3) {}
 
     pub fn normalize(&mut self) {
         let norm = ((self.normal[0] * self.normal[0])
