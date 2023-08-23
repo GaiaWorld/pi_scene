@@ -33,7 +33,7 @@ impl Plane {
 
     pub fn dot_coordinate(&self, point: &Vector3) -> Number {
         return (((self.normal[0] * point[0]) + (self.normal[1] * point[1]))
-            + (self.normal[2] * point[3]))
+            + (self.normal[2] * point[2]))
             + self.d;
     }
 }
