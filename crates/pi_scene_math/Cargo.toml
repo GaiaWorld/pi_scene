@@ -11,9 +11,9 @@ keywords = ["scene render"]
 [dependencies]
 approx = "0.5"
 nalgebra = "0.32"
-pi_animation = { git = "https://github.com/GaiaWorld/pi_animation" }
+pi_animation = {version = "0.1", registry = "yn"}
 
-[patch."https://github.com/GaiaWorld/pi_animation"]
+[patch.yn]
 pi_animation = { path = "../../../pi_animation" }
 
 # [[example]]
