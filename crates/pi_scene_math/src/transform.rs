@@ -1,4 +1,4 @@
-use crate::{Rotation3, Vector3, Number, Matrix, Quaternion, coordiante_system::CoordinateSytem3, vector::{TToolMatrix, TToolRotation}};
+use crate::{Rotation3, Vector3, Number, Matrix, Quaternion, coordiante_system::CoordinateSytem3, vector::TToolRotation};
 
 #[derive(Debug)]
 pub struct Transform3 {
@@ -83,7 +83,7 @@ impl Transform3 {
         self.dirty = true;
         self.rotation.clone_from(&rhs.to_rotation_matrix());
     }
-    pub fn set_rotation_from_euler_angles(&mut self, x: Number, y: Number, z: Number, coord: &CoordinateSytem3) {
+    pub fn set_rotation_from_euler_angles(&mut self, x: Number, y: Number, z: Number, _coord: &CoordinateSytem3) {
         self.dirty = true;
         CoordinateSytem3::rotation_matrix_mut_euler_angles(x, y, z, &mut self.rotation);
     }

@@ -1,6 +1,6 @@
-use nalgebra::{clamp, ComplexField, Matrix3, SimdComplexField};
+use nalgebra::{clamp, Matrix3, SimdComplexField};
 
-use crate::{vector::{TToolVector3, TToolMatrix, TToolRotation}, Vector3, Number, Matrix, Quaternion, Affine3, Rotation3, Vector4, Point3, Isometry3};
+use crate::{vector::{TToolVector3, TToolMatrix, TToolRotation}, Vector3, Number, Matrix, Quaternion, Rotation3, Vector4, Point3, Isometry3};
 
 
 #[derive(Debug, Clone, Copy)]
@@ -120,15 +120,15 @@ impl TToolVector3 for CoordinateSytem3 {
         result.copy_from(&h.xyz());
     }
 
-    fn rotation_from_axis(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Vector3) {
+    fn rotation_from_axis(_axis1: &Vector3, _axis2: &Vector3, _axis3: &Vector3, _result: &mut Vector3) {
         // todo!()
     }
 
-    fn rotate_by_quaternion(v0: &Vector3, quaternion: &Quaternion, result: &mut Vector3) {
+    fn rotate_by_quaternion(_v0: &Vector3, _quaternion: &Quaternion, _result: &mut Vector3) {
         // todo!()
     }
 
-    fn rotate_by_quaternion_around_point(v0: &Vector3, quaternion: &Quaternion, point: Vector3, result: &mut Vector3) {
+    fn rotate_by_quaternion_around_point(_v0: &Vector3, _quaternion: &Quaternion, _point: Vector3, _result: &mut Vector3) {
         // todo!()
     }
 }
@@ -293,7 +293,7 @@ impl TToolRotation for CoordinateSytem3 {
         Quaternion::from_quaternion(quat)
     }
 
-    fn quaternion_mut_axis(&self, axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Quaternion) {
+    fn quaternion_mut_axis(&self, _axis1: &Vector3, _axis2: &Vector3, _axis3: &Vector3, _result: &mut Quaternion) {
         todo!()
     }
 
@@ -353,7 +353,7 @@ impl TToolRotation for CoordinateSytem3 {
         result.clone_from(&Rotation3::from_euler_angles(roll, pitch, yaw));
     }
 
-    fn rotation_matrix_mut_axis(&self, axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Rotation3) {
+    fn rotation_matrix_mut_axis(&self, _axis1: &Vector3, _axis2: &Vector3, _axis3: &Vector3, _result: &mut Rotation3) {
         todo!()
     }
 

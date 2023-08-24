@@ -1,6 +1,4 @@
-use std::ops::IndexMut;
 
-use nalgebra::UninitVector;
 
 use crate::{Number, Vector3, Matrix, Quaternion, Rotation3, Isometry3};
 
