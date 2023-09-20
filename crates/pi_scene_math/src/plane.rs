@@ -1,5 +1,6 @@
 use crate::{Number, Vector3};
 
+#[derive(Debug)]
 pub struct Plane {
     pub normal: Vector3,
     pub d: Number,
@@ -22,7 +23,7 @@ impl Plane {
             .sqrt();
         let mut magnitude = 0.0;
 
-        if norm != 0.0 {
+        if norm > 0.0 {
             magnitude = 1.0 / norm;
         }
         self.normal[0] *= magnitude;
