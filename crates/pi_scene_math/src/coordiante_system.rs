@@ -179,7 +179,7 @@ impl TToolMatrix for CoordinateSytem3 {
         // // rotmat.to_homogeneous().mul_to(&affine, result);
 
         affine.append_nonuniform_scaling_mut(scaling);
-        rotmat.to_homogeneous().mul_to(&affine, &mut result);
+        rotmat.to_homogeneous().mul_to(&affine, result);
         result.append_translation_mut(translation);
     }
 
