@@ -173,11 +173,14 @@ impl TToolMatrix for CoordinateSytem3 {
 
     fn matrix4_compose_rotation(scaling: &Vector3, rotmat: &Rotation3, translation: &Vector3, result: &mut Matrix) {
         let mut affine = Matrix::identity();
-        affine.append_nonuniform_scaling_mut(scaling);
-        affine.append_translation_mut(translation);
+        // affine.append_nonuniform_scaling_mut(scaling);
+        // affine.append_translation_mut(translation);
+        // affine.mul_to(&rotmat.to_homogeneous(), result);
+        // // rotmat.to_homogeneous().mul_to(&affine, result);
 
-        affine.mul_to(&rotmat.to_homogeneous(), result);
-        // rotmat.to_homogeneous().mul_to(&affine, result);
+        affine.append_nonuniform_scaling_mut(scaling);
+        rotmat.to_homogeneous().mul_to(&affine, &mut result);
+        result.append_translation_mut(translation);
     }
 
     fn matrix4_decompose_rotation(m: &Matrix, scaling: Option<&mut Vector3>, rotation: Option<&mut Rotation3>, translation: Option<&mut Vector3>) -> bool {

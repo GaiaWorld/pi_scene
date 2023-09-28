@@ -93,10 +93,14 @@ impl Transform3 {
     pub fn calc_matrix(&mut self) {
         if self.dirty {
             let mut affine = Matrix::identity();
+            // affine.append_nonuniform_scaling_mut(&self.scaling);
+            // affine.append_translation_mut(&self.translation);
+            // affine.mul_to(&self.rotation.to_homogeneous(), &mut self.local_matrix);
+            // // self.rotation.to_homogeneous().mul_to(&affine, &mut self.local_matrix);
+            
             affine.append_nonuniform_scaling_mut(&self.scaling);
-            affine.append_translation_mut(&self.translation);
-            affine.mul_to(&self.rotation.to_homogeneous(), &mut self.local_matrix);
-            // self.rotation.to_homogeneous().mul_to(&affine, &mut self.local_matrix);
+            self.rotation.to_homogeneous().mul_to(&affine, &mut self.local_matrix);
+            self.local_matrix.append_translation_mut(&self.translation);
         }
 
         self.dirty = false;
