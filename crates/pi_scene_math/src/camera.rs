@@ -1,5 +1,5 @@
 
-use crate::{Matrix, Number, coordiante_system::CoordinateSytem3};
+use crate::{Matrix, Number, coordiante_system::CoordinateSytem3, Perspective3, Orthographic3};
 
 pub trait TOrthographicCameraTool {
     fn orthographic_rh(
@@ -43,6 +43,7 @@ impl TOrthographicCameraTool for CoordinateSytem3 {
         znear: Number,
         zfar: Number,
     ) -> Matrix {
+        let half_z_range: Matrix = Matrix::from_column_slice([1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.5, 0., 0., 0., 0.5, 1.].as_slice());
         let n = znear;
         let f = zfar;
 
@@ -54,13 +55,23 @@ impl TOrthographicCameraTool for CoordinateSytem3 {
         let i1 = (top + bottom) / (bottom - top);
 
         let result = Matrix::from_column_slice(&[
-            a, 0.0, 0.0, 0.0,
-            0.0, b, 0.0, 0.0,
-            0.0, 0.0, c, 0.0,
-            i0, i1, d, 1.0,
+            a,      0.0,    0.0,    0.0,
+            0.0,    b,      0.0,    0.0,
+            0.0,    0.0,    c,      0.0,
+            i0,     i1,     d,      1.0,
         ]);
 
-        return result;
+        // println!(">>>>>>>>>> P: {:?}", result);
+        // println!(">>>>>>>>>> HP: {:?}", half_z_range * result);
+
+        return half_z_range * result;
+        
+        // Orthographic3::new(left, right, bottom, top, znear, zfar).as_matrix() * half_z_range
+        // if is_vertical_fixed {
+        //     Orthographic3::new(left, right, bottom, top, znear, zfar).as_matrix().clone()
+        // } else {
+        //     Perspective3::new(aspect, fov / aspect, znear, zfar).as_matrix().clone()
+        // }
     }
 }
 
@@ -103,6 +114,7 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
         zfar: Number,
         is_vertical_fixed: bool
     ) -> Matrix {
+        let half_z_range: Matrix = Matrix::from_column_slice([1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.5, 0., 0., 0., 0.5, 1.].as_slice());
         let n = znear;
         let f = zfar;
 
@@ -119,7 +131,13 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
             0.0, 0.0, -1.0, 0.0,
         ]);
 
-        return result;
+        return half_z_range * result;
+
+        // if is_vertical_fixed {
+        //     Perspective3::new(aspect, fov, znear, zfar).as_matrix() * half_z_range
+        // } else {
+        //     Perspective3::new(aspect, fov / aspect, znear, zfar).as_matrix() * half_z_range
+        // }
     }
 
     fn perspective_rh(
@@ -129,6 +147,7 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
         zfar: Number,
         is_vertical_fixed: bool
     ) -> Matrix {
+        let half_z_range: Matrix = Matrix::from_column_slice([1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.5, 0., 0., 0., 0.5, 1.].as_slice());
         let n = znear;
         let f = zfar;
 
@@ -145,7 +164,14 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
             0.0, 0.0, d, 0.0,
         ]);
 
-        return result;
+        return half_z_range * result;
+        
+
+        // if is_vertical_fixed {
+        //     Perspective3::new(aspect, fov, znear, zfar).as_matrix() * half_z_range
+        // } else {
+        //     Perspective3::new(aspect, fov / aspect, znear, zfar).as_matrix() * half_z_range
+        // }
     }
 
     fn perspective_for_reverse_lh(
@@ -155,6 +181,7 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
         zfar: Number,
         is_vertical_fixed: bool
     ) -> Matrix {
+        let half_z_range: Matrix = Matrix::from_column_slice([1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.5, 0., 0., 0., 0.5, 1.].as_slice());
         let n = znear;
         let f = zfar;
 
@@ -171,7 +198,13 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
             0.0, 0.0, -1.0, 0.0,
         ]);
 
-        return result;
+        return half_z_range * result;
+
+        // if is_vertical_fixed {
+        //     Perspective3::new(aspect, fov, znear, zfar).as_matrix() * half_z_range
+        // } else {
+        //     Perspective3::new(aspect, fov / aspect, znear, zfar).as_matrix() * half_z_range
+        // }
     }
 
     fn perspective_lh(
@@ -181,6 +214,7 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
         zfar: Number,
         is_vertical_fixed: bool
     ) -> Matrix {
+        let half_z_range: Matrix = Matrix::from_column_slice([1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 0.5, 0., 0., 0., 0.5, 1.].as_slice());
         let n = znear;
         let f = zfar;
 
@@ -197,6 +231,12 @@ impl TPerspectiveCameraTool for CoordinateSytem3 {
             0.0, 0.0, d, 0.0,
         ]);
 
-        return result;
+        return half_z_range * result;
+        
+        // if is_vertical_fixed {
+        //     Perspective3::new(aspect, fov, znear, zfar).as_matrix() * half_z_range
+        // } else {
+        //     Perspective3::new(aspect, fov / aspect, znear, zfar).as_matrix() * half_z_range
+        // }
     }
 }

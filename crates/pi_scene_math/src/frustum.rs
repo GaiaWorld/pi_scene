@@ -16,6 +16,7 @@ impl Default for FrustumPlanes {
 }
 
 impl FrustumPlanes {
+    /// 使用的 BABYLONJS 代码 行主序
     pub fn from_transform_matrix(&mut self, transform: &Matrix) {
         // Near
         self.transform_near_plane(transform);
@@ -38,10 +39,10 @@ impl FrustumPlanes {
 
     pub fn transform_near_plane(&mut self, transform: &Matrix) {
         let m = transform;
-        self.near.normal.x = m[3] + m[2];
-        self.near.normal.y = m[7] + m[6];
-        self.near.normal.z = m[11] + m[10];
-        self.near.d = m[15] + m[14];
+        self.near.normal.x  = m[3]  + m[2];
+        self.near.normal.y  = m[7]  + m[6];
+        self.near.normal.z  = m[11] + m[10];
+        self.near.d         = m[15] + m[14];
         self.near.normalize();
     }
 
