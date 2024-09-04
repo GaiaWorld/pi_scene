@@ -1,4 +1,4 @@
-use nalgebra::{clamp, Matrix3, SimdComplexField};
+use nalgebra::{clamp, Matrix3, RawStorage, RawStorageMut, SimdComplexField};
 
 use crate::{vector::{TToolVector3, TToolMatrix, TToolRotation}, Vector3, Number, Matrix, Quaternion, Rotation3, Vector4, Point3, Isometry3};
 
@@ -107,7 +107,9 @@ impl TToolVector3 for CoordinateSytem3 {
     fn transform_coordinates(v0: &Vector3, transformation: &Matrix, result: &mut Vector3) {
         let mut h = Vector3::to_homogeneous(v0);
         h.w = 1.; // coordinate
-        transformation.mul_to(&h.clone(), &mut h);
+
+        CoordinateSytem3::matrix4_mul_vector4(transformation, &h.clone(), &mut h);
+        // transformation.mul_to(&h.clone(), &mut h);
 
         result.copy_from(&h.xyz());
     }
@@ -115,7 +117,9 @@ impl TToolVector3 for CoordinateSytem3 {
     fn transform_normal(v0: &Vector3, transformation: &Matrix, result: &mut Vector3) {
         let mut h = Vector3::to_homogeneous(v0);
         h.w = 0.; // normal
-        transformation.mul_to(&h.clone(), &mut h);
+        
+        CoordinateSytem3::matrix4_mul_vector4(transformation, &h.clone(), &mut h);
+        // transformation.mul_to(&h.clone(), &mut h);
 
         result.copy_from(&h.xyz());
     }
@@ -135,7 +139,65 @@ impl TToolVector3 for CoordinateSytem3 {
 
 
 impl TToolMatrix for CoordinateSytem3 {
+    fn mul_to(a: &Matrix, b: &Matrix, y: & mut Matrix) {
+        Self::matrix4_mul_matrix4(a, b, y);
+    }
+    fn matrix4_mul_vector4(a: &Matrix, b: &Vector4, y: & mut Vector4) {
+    
+        // let ncols1 = y.ncols();
+        
+        let (nrows2, ncols2) = a.shape();
+        let (_nrows3, ncols3) = b.shape();
 
+        let (rsa, csa) = a.strides();
+        let (rsb, csb) = b.strides();
+        let (rsc, csc) = y.strides();
+
+        unsafe { matrixmultiply::sgemm(
+            nrows2,
+            ncols2,
+            ncols3,
+            1.0,
+            a.data.ptr() as *const f32,
+            rsa as isize,
+            csa as isize,
+            b.data.ptr() as *const f32,
+            rsb as isize,
+            csb as isize,
+            0.,
+            y.data.ptr_mut() as *mut f32,
+            rsc as isize,
+            csc as isize,
+        ) };
+    }
+    fn matrix4_mul_matrix4(a: &Matrix, b: &Matrix, y: & mut Matrix) {
+    
+        // let ncols1 = y.ncols();
+        
+        let (nrows2, ncols2) = a.shape();
+        let (_nrows3, ncols3) = b.shape();
+    
+        let (rsa, csa) = a.strides();
+        let (rsb, csb) = b.strides();
+        let (rsc, csc) = y.strides();
+    
+        unsafe { matrixmultiply::sgemm(
+            nrows2,
+            ncols2,
+            ncols3,
+            1.0,
+            a.data.ptr() as *const f32,
+            rsa as isize,
+            csa as isize,
+            b.data.ptr() as *const f32,
+            rsb as isize,
+            csb as isize,
+            0.,
+            y.data.ptr_mut() as *mut f32,
+            rsc as isize,
+            csc as isize,
+        ) };
+    }
     fn matrix4_compose(scaling: &Vector3, quaternion: &Quaternion, translation: &Vector3, result: &mut Matrix) {
         let rotation = quaternion.to_rotation_matrix();
         Self::matrix4_compose_rotation(scaling, &rotation, translation, result);
@@ -156,7 +218,7 @@ impl TToolMatrix for CoordinateSytem3 {
                 let mut rotation = Rotation3::default();
                 let result = Self::matrix4_decompose_rotation(m, scaling, Some(&mut rotation), translation);
 
-                quaternion.clone_from(&Quaternion::from_rotation_matrix(&rotation));
+                *quaternion = Quaternion::from_rotation_matrix(&rotation);
 
                 result
             },
@@ -172,15 +234,20 @@ impl TToolMatrix for CoordinateSytem3 {
     }
 
     fn matrix4_compose_rotation(scaling: &Vector3, rotmat: &Rotation3, translation: &Vector3, result: &mut Matrix) {
-        let mut affine = Matrix::identity();
-        // affine.append_nonuniform_scaling_mut(scaling);
-        // affine.append_translation_mut(translation);
-        // affine.mul_to(&rotmat.to_homogeneous(), result);
-        // // rotmat.to_homogeneous().mul_to(&affine, result);
+        result.fill_with_identity();
 
-        affine.append_nonuniform_scaling_mut(scaling);
-        rotmat.to_homogeneous().mul_to(&affine, result);
+        result.fixed_view_mut::<3, 3>(0, 0).copy_from(rotmat.matrix());
+        // result.append_nonuniform_scaling_mut(scaling);
+        result.prepend_nonuniform_scaling_mut(scaling);
+    
         result.append_translation_mut(translation);
+        // CoordinateSytem3::matrix4_compose_rotation(scaling, rotmat, translation, result)
+    }
+    fn matrix4_compose_no_rotation(scaling: &Vector3, translation: &Vector3, result: &mut Matrix) {
+        result.fill_with_identity();
+        result.append_nonuniform_scaling_mut(scaling);
+        result.append_translation_mut(translation);
+        // CoordinateSytem3::matrix4_compose_rotation(scaling, rotmat, translation, result)
     }
 
     fn matrix4_decompose_rotation(m: &Matrix, scaling: Option<&mut Vector3>, rotation: Option<&mut Rotation3>, translation: Option<&mut Vector3>) -> bool {
@@ -194,7 +261,8 @@ impl TToolMatrix for CoordinateSytem3 {
                 scaling.x = 1.; scaling.y = 1.; scaling.z = 1.; 
             }
             if let Some(rotation) =  rotation {
-                rotation.clone_from(&Self::rotation_matrix_from_euler_angles(0., 0., 0.));
+                *rotation = Rotation3::identity();
+                // *rotation = Self::rotation_matrix_from_euler_angles(0., 0., 0.);
             }
 
             return true;
@@ -247,7 +315,7 @@ impl TToolMatrix for CoordinateSytem3 {
         let c = to.dot(from);
         let k = 1. / (1. + c);
 
-        result.copy_from(&Matrix::identity());
+        result.fill_with_identity();
 
         let m_00: Number = v.x * v.x * k + c;       let m_01: Number = v.y * v.x * k - v.z;     let m_02: Number = v.z * v.x * k + v.y;     let m_03: Number = 0.;
         let m_04: Number = v.x * v.y * k + v.z;     let m_05: Number = v.y * v.y * k + c;       let m_06: Number = v.z * v.y * k - v.x;     let m_07: Number = 0.;
@@ -265,8 +333,8 @@ impl TToolMatrix for CoordinateSytem3 {
         let target = Point3::from_slice(target.as_slice());
 
         match self.mode {
-            ECoordinateSytem3::Left => { result.clone_from(&Isometry3::look_at_lh(&eye, &target, up)); },
-            ECoordinateSytem3::Right => { result.clone_from(&Isometry3::look_at_rh(&eye, &target, up)); },
+            ECoordinateSytem3::Left => { *result = Isometry3::look_at_lh(&eye, &target, up); },
+            ECoordinateSytem3::Right => { *result = Isometry3::look_at_rh(&eye, &target, up); },
         }
         
     }
@@ -278,7 +346,7 @@ impl TToolRotation for CoordinateSytem3 {
     }
 
     fn quaternion_mut_yaw_pitch_roll(&self, yaw: Number, pitch: Number, roll: Number, result: &mut Quaternion) {
-        result.clone_from(&Quaternion::from_rotation_matrix(&Self::rotation_matrix_from_euler_angles(yaw, pitch, roll)));
+        *result = Quaternion::from_rotation_matrix(&Self::rotation_matrix_from_euler_angles(yaw, pitch, roll));
     }
 
     fn quaternion_from_unit_vector(axis: &nalgebra::Unit<Vector3>, vec_to: &Vector3) -> Quaternion {
@@ -353,7 +421,7 @@ impl TToolRotation for CoordinateSytem3 {
         //         result.clone_from(&Rotation3::from_euler_angles(roll, pitch, yaw));
         //     },
         // }
-        result.clone_from(&Rotation3::from_euler_angles(roll, pitch, yaw));
+        *result = Rotation3::from_euler_angles(roll, pitch, yaw);
     }
 
     fn rotation_matrix_mut_axis(&self, _axis1: &Vector3, _axis2: &Vector3, _axis3: &Vector3, _result: &mut Rotation3) {
@@ -374,11 +442,11 @@ impl TToolRotation for CoordinateSytem3 {
     }
 
     fn quaternion_mut_euler_angles(x: Number, y: Number, z: Number, result: &mut Quaternion) {
-        result.clone_from(&Self::quaternion_from_euler_angles(x, y, z));
+        *result = Self::quaternion_from_euler_angles(x, y, z);
     }
 
     fn rotation_matrix_mut_euler_angles(x: Number, y: Number, z: Number, result: &mut Rotation3) {
-        result.clone_from(&Self::rotation_matrix_from_euler_angles(x, y, z));
+        *result = Self::rotation_matrix_from_euler_angles(x, y, z);
     }
     ///
     /// 会卡死原因未知

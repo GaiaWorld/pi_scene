@@ -11,6 +11,7 @@ keywords = ["scene render"]
 [dependencies]
 approx = "0.5"
 nalgebra = "0.32"
+matrixmultiply = "0.3"
 pi_animation = {version = "0.1", registry = "yn"}
 
 [patch.yn]

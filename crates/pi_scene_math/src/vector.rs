@@ -93,12 +93,16 @@ pub trait TToolRotation {
 }
 
 pub trait TToolMatrix {
+    fn mul_to(a: &Matrix, b: &Matrix, y: & mut Matrix);
+    fn matrix4_mul_matrix4(a: &Matrix, b: &Matrix, y: & mut Matrix);
+    fn matrix4_mul_vector4(a: &Matrix, b: &crate::Vector4, y: & mut crate::Vector4);
     fn matrix4_from_xyz_axes(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Matrix);
     fn matrix4_decompose(m: &Matrix, scaling: Option<&mut Vector3>, quaternion: Option<&mut Quaternion>, translation: Option<&mut Vector3>) -> bool;
     fn matrix4_decompose_rotation(m: &Matrix, scaling: Option<&mut Vector3>, rotation: Option<&mut Rotation3>, translation: Option<&mut Vector3>) -> bool;
     fn matrix4_compose(scaling: &Vector3, quaternion: &Quaternion, translation: &Vector3, result: &mut Matrix);
     fn matrix4_compose_euler_angle(scaling: &Vector3, eulers: &Vector3, translation: &Vector3, result: &mut Matrix);
     fn matrix4_compose_rotation(scaling: &Vector3, rotmat: &Rotation3, translation: &Vector3, result: &mut Matrix);
+    fn matrix4_compose_no_rotation(scaling: &Vector3, translation: &Vector3, result: &mut Matrix);
     fn rotation_align_to(from: &Vector3, to: &Vector3, result: &mut Matrix);
     fn lookat(&self, eye: &Vector3, target: &Vector3, up: &Vector3, result: &mut Isometry3);
 }
