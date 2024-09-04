@@ -140,63 +140,46 @@ impl TToolVector3 for CoordinateSytem3 {
 
 impl TToolMatrix for CoordinateSytem3 {
     fn mul_to(a: &Matrix, b: &Matrix, y: & mut Matrix) {
-        Self::matrix4_mul_matrix4(a, b, y);
+        a.mul_to(b, y);
+        // Self::matrix4_mul_matrix4(a, b, y);
     }
     fn matrix4_mul_vector4(a: &Matrix, b: &Vector4, y: & mut Vector4) {
-    
-        // let ncols1 = y.ncols();
-        
-        let (nrows2, ncols2) = a.shape();
-        let (_nrows3, ncols3) = b.shape();
-
-        let (rsa, csa) = a.strides();
-        let (rsb, csb) = b.strides();
-        let (rsc, csc) = y.strides();
-
-        unsafe { matrixmultiply::sgemm(
-            nrows2,
-            ncols2,
-            ncols3,
-            1.0,
-            a.data.ptr() as *const f32,
-            rsa as isize,
-            csa as isize,
-            b.data.ptr() as *const f32,
-            rsb as isize,
-            csb as isize,
-            0.,
-            y.data.ptr_mut() as *mut f32,
-            rsc as isize,
-            csc as isize,
-        ) };
+        a.mul_to(b, y);
+        // unsafe { matrixmultiply::sgemm(
+        //     4,
+        //     4,
+        //     1,
+        //     1.0,
+        //     a.data.ptr() as *const f32,
+        //     1 as isize,
+        //     4 as isize,
+        //     b.data.ptr() as *const f32,
+        //     1 as isize,
+        //     4 as isize,
+        //     0.,
+        //     y.data.ptr_mut() as *mut f32,
+        //     1 as isize,
+        //     4 as isize,
+        // ) };
     }
     fn matrix4_mul_matrix4(a: &Matrix, b: &Matrix, y: & mut Matrix) {
-    
-        // let ncols1 = y.ncols();
-        
-        let (nrows2, ncols2) = a.shape();
-        let (_nrows3, ncols3) = b.shape();
-    
-        let (rsa, csa) = a.strides();
-        let (rsb, csb) = b.strides();
-        let (rsc, csc) = y.strides();
-    
-        unsafe { matrixmultiply::sgemm(
-            nrows2,
-            ncols2,
-            ncols3,
-            1.0,
-            a.data.ptr() as *const f32,
-            rsa as isize,
-            csa as isize,
-            b.data.ptr() as *const f32,
-            rsb as isize,
-            csb as isize,
-            0.,
-            y.data.ptr_mut() as *mut f32,
-            rsc as isize,
-            csc as isize,
-        ) };
+        a.mul_to(b, y);
+        // unsafe { matrixmultiply::sgemm(
+        //     4,
+        //     4,
+        //     4,
+        //     1.0,
+        //     a.data.ptr() as *const f32,
+        //     1 as isize,
+        //     4 as isize,
+        //     b.data.ptr() as *const f32,
+        //     1 as isize,
+        //     4 as isize,
+        //     0.,
+        //     y.data.ptr_mut() as *mut f32,
+        //     1 as isize,
+        //     4 as isize,
+        // ) };
     }
     fn matrix4_compose(scaling: &Vector3, quaternion: &Quaternion, translation: &Vector3, result: &mut Matrix) {
         let rotation = quaternion.to_rotation_matrix();
@@ -381,6 +364,23 @@ impl TToolRotation for CoordinateSytem3 {
         result.copy_from_slice(&[x, y, z]);
     }
 
+    fn rotation_matrix_from_euler_angles_toref(x: Number, y: Number, z: Number, result: &mut Rotation3) {
+        let (sr, cr) = x.simd_sin_cos();
+        let (sp, cp) = y.simd_sin_cos();
+        let (sy, cy) = z.simd_sin_cos();
+
+        result.matrix_mut_unchecked().copy_from_slice(&[
+            cy * cp,
+            cy * sp * sr - sy * cr,
+            cy * sp * cr + sy * sr,
+            sy * cp,
+            sy * sp * sr + cy * cr,
+            sy * sp* cr - cy * sr,
+            -sp,
+            cp * sr,
+            cp * cr,
+        ]);
+    }
     fn rotation_matrix_from_euler_angles(x: Number, y: Number, z: Number) -> Rotation3 {
         // match self.mode {
         //     ECoordinateSytem3::Left => {
@@ -399,14 +399,14 @@ impl TToolRotation for CoordinateSytem3 {
 
         Rotation3::from_matrix_unchecked(Matrix3::from_column_slice(
             &[
-                cy.clone() * cp.clone(),
-                cy.clone() * sp.clone() * sr.clone() - sy.clone() * cr.clone(),
-                cy.clone() * sp.clone() * cr.clone() + sy.clone() * sr.clone(),
-                sy.clone() * cp.clone(),
-                sy.clone() * sp.clone() * sr.clone() + cy.clone() * cr.clone(),
-                sy * sp.clone() * cr.clone() - cy * sr.clone(),
+                cy * cp,
+                cy * sp * sr - sy * cr,
+                cy * sp * cr + sy * sr,
+                sy * cp,
+                sy * sp * sr + cy * cr,
+                sy * sp* cr - cy * sr,
                 -sp,
-                cp.clone() * sr,
+                cp * sr,
                 cp * cr,
             ]
         ))
