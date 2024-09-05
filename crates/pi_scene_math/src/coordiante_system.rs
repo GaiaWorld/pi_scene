@@ -1,3 +1,5 @@
+use core::num;
+
 use nalgebra::{clamp, Matrix3, RawStorage, RawStorageMut, SimdComplexField};
 
 use crate::{vector::{TToolVector3, TToolMatrix, TToolRotation}, Vector3, Number, Matrix, Quaternion, Rotation3, Vector4, Point3, Isometry3};
@@ -105,23 +107,66 @@ impl TToolVector3 for CoordinateSytem3 {
     }
 
     fn transform_coordinates(v0: &Vector3, transformation: &Matrix, result: &mut Vector3) {
-        let mut h = Vector3::to_homogeneous(v0);
-        h.w = 1.; // coordinate
+        // let mut h = Vector3::to_homogeneous(v0);
+        // h.w = 1.; // coordinate
+        // CoordinateSytem3::matrix4_mul_vector4(transformation, &h.clone(), &mut h);
+        // // transformation.mul_to(&h.clone(), &mut h);
+        // result.copy_from(&h.xyz());
 
-        CoordinateSytem3::matrix4_mul_vector4(transformation, &h.clone(), &mut h);
-        // transformation.mul_to(&h.clone(), &mut h);
+        let m = transformation.as_slice();
+        let x = v0.x; let y = v0.y; let z = v0.z;
+        let rx = x * m[0] + y * m[4] + z * m[8] + m[12];
+        let ry = x * m[1] + y * m[5] + z * m[9] + m[13];
+        let rz = x * m[2] + y * m[6] + z * m[10] + m[14];
+        let rw = 1. / (x * m[3] + y * m[7] + z * m[11] + m[15]);
+        result.x = rx * rw;
+        result.y = ry * rw;
+        result.z = rz * rw;
 
-        result.copy_from(&h.xyz());
+    }
+
+    fn transform_coordinates_floats(x: Number, y: Number, z: Number, transformation: &Matrix, result: &mut Vector3) {
+        // let mut h = Vector3::to_homogeneous(v0);
+        // h.w = 1.; // coordinate
+        // CoordinateSytem3::matrix4_mul_vector4(transformation, &h.clone(), &mut h);
+        // // transformation.mul_to(&h.clone(), &mut h);
+        // result.copy_from(&h.xyz());
+
+        let m = transformation.as_slice();
+        let rx = x * m[0] + y * m[4] + z * m[8] + m[12];
+        let ry = x * m[1] + y * m[5] + z * m[9] + m[13];
+        let rz = x * m[2] + y * m[6] + z * m[10] + m[14];
+        let rw = 1. / (x * m[3] + y * m[7] + z * m[11] + m[15]);
+        result.x = rx * rw;
+        result.y = ry * rw;
+        result.z = rz * rw;
+
     }
 
     fn transform_normal(v0: &Vector3, transformation: &Matrix, result: &mut Vector3) {
-        let mut h = Vector3::to_homogeneous(v0);
-        h.w = 0.; // normal
-        
-        CoordinateSytem3::matrix4_mul_vector4(transformation, &h.clone(), &mut h);
-        // transformation.mul_to(&h.clone(), &mut h);
+        // let mut h = Vector3::to_homogeneous(v0);
+        // h.w = 0.; // normal
+        // CoordinateSytem3::matrix4_mul_vector4(transformation, &h.clone(), &mut h);
+        // // transformation.mul_to(&h.clone(), &mut h);
+        // result.copy_from(&h.xyz());
 
-        result.copy_from(&h.xyz());
+        let m = transformation.as_slice();
+        result.x = v0.x * m[0] + v0.y * m[4] + v0.z * m[8];
+        result.y = v0.x * m[1] + v0.y * m[5] + v0.z * m[9];
+        result.z = v0.x * m[2] + v0.y * m[6] + v0.z * m[10];
+    }
+
+    fn transform_normal_floats(x: Number, y: Number, z: Number, transformation: &Matrix, result: &mut Vector3) {
+        // let mut h = Vector3::to_homogeneous(v0);
+        // h.w = 0.; // normal
+        // CoordinateSytem3::matrix4_mul_vector4(transformation, &h.clone(), &mut h);
+        // // transformation.mul_to(&h.clone(), &mut h);
+        // result.copy_from(&h.xyz());
+
+        let m = transformation.as_slice();
+        result.x = x * m[0] + y * m[4] + z * m[8];
+        result.y = x * m[1] + y * m[5] + z * m[9];
+        result.z = x * m[2] + y * m[6] + z * m[10];
     }
 
     fn rotation_from_axis(_axis1: &Vector3, _axis2: &Vector3, _axis3: &Vector3, _result: &mut Vector3) {
@@ -139,47 +184,82 @@ impl TToolVector3 for CoordinateSytem3 {
 
 
 impl TToolMatrix for CoordinateSytem3 {
+    fn try_inverse_mut(matrix: &mut Matrix) -> bool {
+        // matrix.try_inverse_mut()
+        let m = matrix.as_mut_slice();
+        let m00 = m[ 0]; let m01 = m[ 1]; let m02 = m[ 2]; let m03 = m[ 3];
+        let m10 = m[ 4]; let m11 = m[ 5]; let m12 = m[ 6]; let m13 = m[ 7];
+        let m20 = m[ 8]; let m21 = m[ 9]; let m22 = m[10]; let m23 = m[11];
+        let m30 = m[12]; let m31 = m[13]; let m32 = m[14]; let m33 = m[15];
+        let det_22_33 = m22 * m33 - m32 * m23;
+        let det_21_33 = m21 * m33 - m31 * m23;
+        let det_21_32 = m21 * m32 - m31 * m22;
+        let det_20_33 = m20 * m33 - m30 * m23;
+        let det_20_32 = m20 * m32 - m22 * m30;
+        let det_20_31 = m20 * m31 - m30 * m21;
+        let cofact_00 = 0. + (m11 * det_22_33 - m12 * det_21_33 + m13 * det_21_32);
+        let cofact_01 = 0. - (m10 * det_22_33 - m12 * det_20_33 + m13 * det_20_32);
+        let cofact_02 = 0. + (m10 * det_21_33 - m11 * det_20_33 + m13 * det_20_31);
+        let cofact_03 = 0. - (m10 * det_21_32 - m11 * det_20_32 + m12 * det_20_31);
+        let det = m00 * cofact_00 + m01 * cofact_01 + m02 * cofact_02 + m03 * cofact_03;
+        if det == 0. {
+            // not invertible
+            // other.copyFrom(this);
+            matrix.fill_with_identity();
+            return false;
+        }
+        let det_inv = 1. / det;
+        let det_12_33 = m12 * m33 - m32 * m13;
+        let det_11_33 = m11 * m33 - m31 * m13;
+        let det_11_32 = m11 * m32 - m31 * m12;
+        let det_10_33 = m10 * m33 - m30 * m13;
+        let det_10_32 = m10 * m32 - m30 * m12;
+        let det_10_31 = m10 * m31 - m30 * m11;
+        let det_12_23 = m12 * m23 - m22 * m13;
+        let det_11_23 = m11 * m23 - m21 * m13;
+        let det_11_22 = m11 * m22 - m21 * m12;
+        let det_10_23 = m10 * m23 - m20 * m13;
+        let det_10_22 = m10 * m22 - m20 * m12;
+        let det_10_21 = m10 * m21 - m20 * m11;
+        let cofact_10 = 0. - (m01 * det_22_33 - m02 * det_21_33 + m03 * det_21_32);
+        let cofact_11 = 0. + (m00 * det_22_33 - m02 * det_20_33 + m03 * det_20_32);
+        let cofact_12 = 0. - (m00 * det_21_33 - m01 * det_20_33 + m03 * det_20_31);
+        let cofact_13 = 0. + (m00 * det_21_32 - m01 * det_20_32 + m02 * det_20_31);
+        let cofact_20 = 0. + (m01 * det_12_33 - m02 * det_11_33 + m03 * det_11_32);
+        let cofact_21 = 0. - (m00 * det_12_33 - m02 * det_10_33 + m03 * det_10_32);
+        let cofact_22 = 0. + (m00 * det_11_33 - m01 * det_10_33 + m03 * det_10_31);
+        let cofact_23 = 0. - (m00 * det_11_32 - m01 * det_10_32 + m02 * det_10_31);
+        let cofact_30 = 0. - (m01 * det_12_23 - m02 * det_11_23 + m03 * det_11_22);
+        let cofact_31 = 0. + (m00 * det_12_23 - m02 * det_10_23 + m03 * det_10_22);
+        let cofact_32 = 0. - (m00 * det_11_23 - m01 * det_10_23 + m03 * det_10_21);
+        let cofact_33 = 0. + (m00 * det_11_22 - m01 * det_10_22 + m02 * det_10_21);
+
+        m[ 0] = cofact_00 * det_inv;
+        m[ 1] = cofact_10 * det_inv;
+        m[ 2] = cofact_20 * det_inv;
+        m[ 3] = cofact_30 * det_inv;
+        m[ 4] = cofact_01 * det_inv;
+        m[ 5] = cofact_11 * det_inv;
+        m[ 6] = cofact_21 * det_inv;
+        m[ 7] = cofact_31 * det_inv;
+        m[ 8] = cofact_02 * det_inv;
+        m[ 9] = cofact_12 * det_inv;
+        m[10] = cofact_22 * det_inv;
+        m[11] = cofact_32 * det_inv;
+        m[12] = cofact_03 * det_inv;
+        m[13] = cofact_13 * det_inv;
+        m[14] = cofact_23 * det_inv;
+        m[15] = cofact_33 * det_inv;
+        return true;
+    }
     fn mul_to(a: &Matrix, b: &Matrix, y: & mut Matrix) {
         a.mul_to(b, y);
-        // Self::matrix4_mul_matrix4(a, b, y);
     }
     fn matrix4_mul_vector4(a: &Matrix, b: &Vector4, y: & mut Vector4) {
         a.mul_to(b, y);
-        // unsafe { matrixmultiply::sgemm(
-        //     4,
-        //     4,
-        //     1,
-        //     1.0,
-        //     a.data.ptr() as *const f32,
-        //     1 as isize,
-        //     4 as isize,
-        //     b.data.ptr() as *const f32,
-        //     1 as isize,
-        //     4 as isize,
-        //     0.,
-        //     y.data.ptr_mut() as *mut f32,
-        //     1 as isize,
-        //     4 as isize,
-        // ) };
     }
     fn matrix4_mul_matrix4(a: &Matrix, b: &Matrix, y: & mut Matrix) {
         a.mul_to(b, y);
-        // unsafe { matrixmultiply::sgemm(
-        //     4,
-        //     4,
-        //     4,
-        //     1.0,
-        //     a.data.ptr() as *const f32,
-        //     1 as isize,
-        //     4 as isize,
-        //     b.data.ptr() as *const f32,
-        //     1 as isize,
-        //     4 as isize,
-        //     0.,
-        //     y.data.ptr_mut() as *mut f32,
-        //     1 as isize,
-        //     4 as isize,
-        // ) };
     }
     fn matrix4_compose(scaling: &Vector3, quaternion: &Quaternion, translation: &Vector3, result: &mut Matrix) {
         let rotation = quaternion.to_rotation_matrix();
@@ -291,6 +371,32 @@ impl TToolMatrix for CoordinateSytem3 {
                 return true;
             }
         }
+    }
+
+    fn matrix4_compose_quaternion(scale: &Vector3, quaternion: &Quaternion, translation: &Vector3, result: &mut Matrix) {
+        let m = result.as_mut_slice();
+        let x = quaternion.i; let y = quaternion.j; let z = quaternion.k; let w = quaternion.w;
+        let x2 = x + x; let y2 = y + y; let z2 = z + z;
+        let xx = x * x2; let xy = x * y2; let xz = x * z2;
+        let yy = y * y2; let yz = y * z2; let zz = z * z2;
+        let wx = w * x2; let wy = w * y2; let wz = w * z2;
+        let sx = scale.x; let sy = scale.y; let sz = scale.z;
+        m[ 0] = (1. - (yy + zz)) * sx;
+        m[ 1] = (xy + wz) * sx;
+        m[ 2] = (xz - wy) * sx;
+        m[ 3] = 0.;
+        m[ 4] = (xy - wz) * sy;
+        m[ 5] = (1. - (xx + zz)) * sy;
+        m[ 6] = (yz + wx) * sy;
+        m[ 7] = 0.;
+        m[ 8] = (xz + wy) * sz;
+        m[ 9] = (yz - wx) * sz;
+        m[10] = (1. - (xx + yy)) * sz;
+        m[11] = 0.;
+        m[12] = translation.x;
+        m[13] = translation.y;
+        m[14] = translation.z;
+        m[15] = 1.;
     }
 
     fn rotation_align_to(from: &Vector3, to: &Vector3, result: &mut Matrix) {

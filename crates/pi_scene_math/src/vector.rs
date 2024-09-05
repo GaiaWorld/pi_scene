@@ -55,7 +55,9 @@ pub trait TToolVector3 {
     fn distance_squared(v0: &Vector3, other: &Vector3) -> Number;
     fn clamp(v0: &Vector3, min: &Vector3, max: &Vector3, result: &mut Vector3);
     fn transform_coordinates(v0: &Vector3, transformation: &Matrix, result: &mut Vector3);
+    fn transform_coordinates_floats(x: Number, y: Number, z: Number, transformation: &Matrix, result: &mut Vector3);
     fn transform_normal(v0: &Vector3, transformation: &Matrix, result: &mut Vector3);
+    fn transform_normal_floats(x: Number, y: Number, z: Number, transformation: &Matrix, result: &mut Vector3);
     fn rotation_from_axis(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Vector3);
     fn rotate_by_quaternion(v0: &Vector3, quaternion: &Quaternion, result: &mut Vector3);
     fn rotate_by_quaternion_around_point(v0: &Vector3, quaternion: &Quaternion, point: Vector3, result: &mut Vector3);
@@ -94,6 +96,7 @@ pub trait TToolRotation {
 }
 
 pub trait TToolMatrix {
+    fn try_inverse_mut(matrix: &mut Matrix) -> bool;
     fn mul_to(a: &Matrix, b: &Matrix, y: & mut Matrix);
     fn matrix4_mul_matrix4(a: &Matrix, b: &Matrix, y: & mut Matrix);
     fn matrix4_mul_vector4(a: &Matrix, b: &crate::Vector4, y: & mut crate::Vector4);
@@ -104,6 +107,7 @@ pub trait TToolMatrix {
     fn matrix4_compose_euler_angle(scaling: &Vector3, eulers: &Vector3, translation: &Vector3, result: &mut Matrix);
     fn matrix4_compose_rotation(scaling: &Vector3, rotmat: &Rotation3, translation: &Vector3, result: &mut Matrix);
     fn matrix4_compose_no_rotation(scaling: &Vector3, translation: &Vector3, result: &mut Matrix);
+    fn matrix4_compose_quaternion(scaling: &Vector3, quaternion: &Quaternion, translation: &Vector3, result: &mut Matrix);
     fn rotation_align_to(from: &Vector3, to: &Vector3, result: &mut Matrix);
     fn lookat(&self, eye: &Vector3, target: &Vector3, up: &Vector3, result: &mut Isometry3);
 }
