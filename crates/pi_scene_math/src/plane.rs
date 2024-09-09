@@ -32,9 +32,9 @@ impl Plane {
         self.d *= magnitude;
     }
 
-    pub fn dot_coordinate(&self, point: &Vector3) -> Number {
-        return (((self.normal[0] * point[0]) + (self.normal[1] * point[1]))
-            + (self.normal[2] * point[2]))
+    pub fn dot_coordinate(&self, x: Number, y: Number, z: Number) -> Number {
+        return (((self.normal[0] * x) + (self.normal[1] * y))
+            + (self.normal[2] * z))
             + self.d;
     }
 }
