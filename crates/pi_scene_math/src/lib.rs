@@ -44,7 +44,7 @@ pub type Perspective3 = NPerspective3<Number>;
 pub type Orthographic3 = NOrthographic3<Number>;
 // pub type Transform = NTransform<Number>;
 
-pub trait TCurveVector {
+pub trait TInterpolateVector {
     fn interpolate(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self;
     fn append(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self;
     fn hermite(value1: &Self, tangent1: &Self, value2: &Self, tangent2: &Self, amount: KeyFrameCurveValue, frame_delta: KeyFrameCurveValue) -> Self;
@@ -52,7 +52,7 @@ pub trait TCurveVector {
     fn scale(&self, rhs: KeyFrameCurveValue) -> Self;
 }
 
-impl TCurveVector for Vector2 {
+impl TInterpolateVector for Vector2 {
     fn interpolate(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self {
         self.scale(1.0 - amount) + rhs.scale(amount)
     }
@@ -81,7 +81,7 @@ impl TCurveVector for Vector2 {
     }
 }
 
-impl TCurveVector for Vector3 {
+impl TInterpolateVector for Vector3 {
     fn interpolate(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self {
         self.scale(1.0 - amount) + rhs.scale(amount)
     }
@@ -110,7 +110,7 @@ impl TCurveVector for Vector3 {
     }
 }
 
-impl TCurveVector for Vector4 {
+impl TInterpolateVector for Vector4 {
     fn interpolate(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self {
         self.scale(1.0 - amount) + rhs.scale(amount)
     }
@@ -149,7 +149,6 @@ mod test {
         let v1 = Vector3::new(2., 1., 2.);
         let mut v2 = Vector3::new(0., 0., 0.);
 
-        Vector3::
         v0.minimize(&v1, &mut v2);
 
         // nalgebra::Perspective3::

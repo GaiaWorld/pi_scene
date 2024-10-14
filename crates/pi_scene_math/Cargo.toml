@@ -1,12 +1,12 @@
 [package]
 name = "pi_scene_math"
-version = "0.0.6"
+version = "0.0.7"
 authors = ["baip0002 <2494156981@qq.com>"]
 edition = "2021"
-description = "Scene Data render."
+description = "Scene Math."
 repository = "https://github.com/GaiaWorld/pi_scene"
 license = "MIT OR Apache-2.0"
-keywords = ["scene render"]
+keywords = ["scene math"]
 
 [dependencies]
 approx = "0.5"
