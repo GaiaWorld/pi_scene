@@ -15,7 +15,6 @@ use nalgebra::{Vector2 as NVector2, Vector3 as NVector3, Vector4 as NVector4, Un
     Matrix2 as NMatrix2, Point3 as NPoint3, Perspective3 as NPerspective3, Orthographic3 as NOrthographic3
 };
 pub use nalgebra::Quaternion as SQuaternion;
-use pi_curves::curve::frame::{FrameDataValue, FrameValueScale, KeyFrameCurveValue};
 
 pub type Number = f32;
 pub type Vector2 = NVector2<Number>;
@@ -44,6 +43,7 @@ pub type Perspective3 = NPerspective3<Number>;
 pub type Orthographic3 = NOrthographic3<Number>;
 // pub type Transform = NTransform<Number>;
 
+#[cfg(feature = "curve_no_nalgebra")]
 pub trait TInterpolateVector {
     fn interpolate(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self;
     fn append(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self;
@@ -52,6 +52,7 @@ pub trait TInterpolateVector {
     fn scale(&self, rhs: KeyFrameCurveValue) -> Self;
 }
 
+#[cfg(feature = "curve_no_nalgebra")]
 impl TInterpolateVector for Vector2 {
     fn interpolate(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self {
         self.scale(1.0 - amount) + rhs.scale(amount)
@@ -81,6 +82,7 @@ impl TInterpolateVector for Vector2 {
     }
 }
 
+#[cfg(feature = "curve_no_nalgebra")]
 impl TInterpolateVector for Vector3 {
     fn interpolate(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self {
         self.scale(1.0 - amount) + rhs.scale(amount)
@@ -110,6 +112,7 @@ impl TInterpolateVector for Vector3 {
     }
 }
 
+#[cfg(feature = "curve_no_nalgebra")]
 impl TInterpolateVector for Vector4 {
     fn interpolate(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self {
         self.scale(1.0 - amount) + rhs.scale(amount)

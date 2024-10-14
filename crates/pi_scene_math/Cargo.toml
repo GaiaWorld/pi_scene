@@ -1,12 +1,16 @@
 [package]
 name = "pi_scene_math"
-version = "0.0.7"
+version = "0.0.8"
 authors = ["baip0002 <2494156981@qq.com>"]
 edition = "2021"
 description = "Scene Math."
 repository = "https://github.com/GaiaWorld/pi_scene"
 license = "MIT OR Apache-2.0"
 keywords = ["scene math"]
+
+[features]
+default = []
+curve_no_nalgebra = []
 
 [dependencies]
 approx = "0.5"
