@@ -11,9 +11,11 @@ keywords = ["scene render"]
 [dependencies]
 approx = "0.5"
 nalgebra = { version = "0.32", features = ["convert-glam025"] }
-pi_animation = {version = "0.1", registry = "yn"}
+pi_animation = { version = "0.1", registry = "yn" }
+pi_curves = { version = "0.1", registry = "yn" }
 
 [patch.yn]
 pi_animation = { path = "../../../pi_animation" }
+pi_curves = { path = "../../../pi_curves" }
 
 # [[example]]

@@ -7,12 +7,15 @@ pub mod frustum;
 pub mod transform;
 pub mod camera;
 
+use std::ops::Add;
+
 use nalgebra::{Vector2 as NVector2, Vector3 as NVector3, Vector4 as NVector4, UnitQuaternion as NQuaternion,  
     Matrix4 as NMatrix4, SimilarityMatrix3 as NSimilarityMatrix3, Translation3 as NTranslation3,
     Affine3 as NAffine3, Projective3 as NProjective3, Isometry3 as NIsometry3, Rotation3 as NRotation3,
     Matrix2 as NMatrix2, Point3 as NPoint3, Perspective3 as NPerspective3, Orthographic3 as NOrthographic3
 };
 pub use nalgebra::Quaternion as SQuaternion;
+use pi_curves::curve::frame::{FrameDataValue, FrameValueScale, KeyFrameCurveValue};
 
 pub type Number = f32;
 pub type Vector2 = NVector2<Number>;
@@ -40,6 +43,101 @@ pub type Point3 = NPoint3<Number>;
 pub type Perspective3 = NPerspective3<Number>;
 pub type Orthographic3 = NOrthographic3<Number>;
 // pub type Transform = NTransform<Number>;
+
+pub trait TCurveVector {
+    fn interpolate(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self;
+    fn append(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self;
+    fn hermite(value1: &Self, tangent1: &Self, value2: &Self, tangent2: &Self, amount: KeyFrameCurveValue, frame_delta: KeyFrameCurveValue) -> Self;
+    fn size() -> usize;
+    fn scale(&self, rhs: KeyFrameCurveValue) -> Self;
+}
+
+impl TCurveVector for Vector2 {
+    fn interpolate(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self {
+        self.scale(1.0 - amount) + rhs.scale(amount)
+    }
+    fn hermite(value1: &Self, tangent1: &Self, value2: &Self, tangent2: &Self, amount: KeyFrameCurveValue, frame_delta: KeyFrameCurveValue) -> Self {
+        let _1 = 1 as KeyFrameCurveValue;
+        let _2 = 2 as KeyFrameCurveValue;
+        let _3 = 3 as KeyFrameCurveValue;
+
+        let squared = amount * amount;
+        let cubed = amount * squared;
+        let part1 = ((_2 * cubed) - (_3 * squared)) + _1;
+        let part2 = (-_2 * cubed) + (_3 * squared);
+        let part3 = (cubed - (_2 * squared)) + amount;
+        let part4 = cubed - squared;
+
+        return (((value1.scale(part1)) + (value2.scale(part2))) + (tangent1.scale(part3 * frame_delta))) + (tangent2.scale(part4 * frame_delta));
+    }
+    fn append(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self {
+        self.clone() + rhs.scale(amount)
+    }
+    fn size() -> usize {
+        8
+    }
+    fn scale(&self, rhs: KeyFrameCurveValue) -> Self {
+        self * rhs
+    }
+}
+
+impl TCurveVector for Vector3 {
+    fn interpolate(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self {
+        self.scale(1.0 - amount) + rhs.scale(amount)
+    }
+    fn hermite(value1: &Self, tangent1: &Self, value2: &Self, tangent2: &Self, amount: KeyFrameCurveValue, frame_delta: KeyFrameCurveValue) -> Self {
+        let _1 = 1 as KeyFrameCurveValue;
+        let _2 = 2 as KeyFrameCurveValue;
+        let _3 = 3 as KeyFrameCurveValue;
+
+        let squared = amount * amount;
+        let cubed = amount * squared;
+        let part1 = ((_2 * cubed) - (_3 * squared)) + _1;
+        let part2 = (-_2 * cubed) + (_3 * squared);
+        let part3 = (cubed - (_2 * squared)) + amount;
+        let part4 = cubed - squared;
+
+        return (((value1.scale(part1)) + (value2.scale(part2))) + (tangent1.scale(part3 * frame_delta))) + (tangent2.scale(part4 * frame_delta));
+    }
+    fn append(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self {
+        self.clone() + rhs.scale(amount)
+    }
+    fn size() -> usize {
+        12
+    }
+    fn scale(&self, rhs: KeyFrameCurveValue) -> Self {
+        self * rhs
+    }
+}
+
+impl TCurveVector for Vector4 {
+    fn interpolate(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self {
+        self.scale(1.0 - amount) + rhs.scale(amount)
+    }
+    fn hermite(value1: &Self, tangent1: &Self, value2: &Self, tangent2: &Self, amount: KeyFrameCurveValue, frame_delta: KeyFrameCurveValue) -> Self {
+        let _1 = 1 as KeyFrameCurveValue;
+        let _2 = 2 as KeyFrameCurveValue;
+        let _3 = 3 as KeyFrameCurveValue;
+
+        let squared = amount * amount;
+        let cubed = amount * squared;
+        let part1 = ((_2 * cubed) - (_3 * squared)) + _1;
+        let part2 = (-_2 * cubed) + (_3 * squared);
+        let part3 = (cubed - (_2 * squared)) + amount;
+        let part4 = cubed - squared;
+
+        return (((value1.scale(part1)) + (value2.scale(part2))) + (tangent1.scale(part3 * frame_delta))) + (tangent2.scale(part4 * frame_delta));
+    }
+    fn append(&self, rhs: &Self, amount: KeyFrameCurveValue) -> Self {
+        self.clone() + rhs.scale(amount)
+    }
+    fn size() -> usize {
+        16
+    }
+    fn scale(&self, rhs: KeyFrameCurveValue) -> Self {
+        self * rhs
+    }
+}
 #[cfg(test)]
 mod test {
 
@@ -51,6 +149,7 @@ mod test {
         let v1 = Vector3::new(2., 1., 2.);
         let mut v2 = Vector3::new(0., 0., 0.);
 
+        Vector3::
         v0.minimize(&v1, &mut v2);
 
         // nalgebra::Perspective3::
