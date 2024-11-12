@@ -74,6 +74,8 @@ pub trait TToolRotation {
     fn quaternion_from_euler_angles(x: Number, y: Number, z: Number) -> Quaternion;
     fn quaternion_mut_euler_angles(x: Number, y: Number, z: Number, result: &mut Quaternion);
     fn quaternion_from_unit_vector(axis: &nalgebra::Unit<Vector3>, vec_to: &Vector3) -> Quaternion;
+    fn quaternion_from_rotation<T: nalgebra::RealField>(quaternion: &mut nalgebra::Quaternion<T>, rotmat: &nalgebra::Rotation3<T>);
+    fn quaternion_to_rotation(quaternion: &nalgebra::Quaternion<Number>, rotation: &mut Rotation3);
     
     /// * `x` Pitch
     /// * `y` Yaw

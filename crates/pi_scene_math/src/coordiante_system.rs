@@ -1,7 +1,4 @@
-use core::num;
-
-use nalgebra::{clamp, Matrix3, RawStorage, RawStorageMut, SimdComplexField};
-
+use nalgebra::{clamp, Matrix3, SimdComplexField, SimdBool, SimdPartialOrd};
 use crate::{vector::{TToolVector3, TToolMatrix, TToolRotation}, Vector3, Number, Matrix, Quaternion, Rotation3, Vector4, Point3, Isometry3};
 
 
@@ -34,14 +31,17 @@ impl CoordinateSytem3 {
 }
 
 impl TToolVector3 for CoordinateSytem3 {
+    #[inline(always)]
     fn up() -> Vector3 {
         Vector3::new(0., 1., 0.)
     }
 
+    #[inline(always)]
     fn down() -> Vector3 {
         Vector3::new(0., -1., 0.)
     }
 
+    #[inline(always)]
     fn backward(&self) -> Vector3 {
         match self.mode {
             ECoordinateSytem3::Left => Vector3::new(0., 0., -1.),
@@ -49,6 +49,7 @@ impl TToolVector3 for CoordinateSytem3 {
         }
     }
 
+    #[inline(always)]
     fn forward(&self) -> Vector3 {
         match self.mode {
             ECoordinateSytem3::Left => Vector3::new(0., 0., 1.),
@@ -56,18 +57,22 @@ impl TToolVector3 for CoordinateSytem3 {
         }
     }
 
+    #[inline(always)]
     fn right() -> Vector3 {
         Vector3::new(1., 0., 0.)
     }
 
+    #[inline(always)]
     fn left() -> Vector3 {
         Vector3::new(-1., 0., 0.)
     }
 
+    #[inline(always)]
     fn one() -> Vector3 {
         Vector3::new(1., 1., 1.)
     }
 
+    #[inline(always)]
     fn get_angle_between_vectors(v0: &Vector3, v1: &Vector3, normal: &Vector3) -> Number {
         let n0 = v0.normalize();
         let n1 = v1.normalize();
@@ -81,24 +86,29 @@ impl TToolVector3 for CoordinateSytem3 {
         }
     }
 
+    #[inline(always)]
     fn length(v0: &Vector3) -> Number {
         v0.metric_distance(&Vector3::zeros())
     }
 
+    #[inline(always)]
     fn length_squared(v0: &Vector3) -> Number {
         let result = v0.metric_distance(&Vector3::zeros());
         result * result
     }
 
+    #[inline(always)]
     fn distance(v0: &Vector3, other: &Vector3) -> Number {
         v0.metric_distance(other)
     }
 
+    #[inline(always)]
     fn distance_squared(v0: &Vector3, other: &Vector3) -> Number {
         let result = v0.metric_distance(other);
         result * result
     }
 
+    #[inline(always)]
     fn clamp(v0: &Vector3, min: &Vector3, max: &Vector3, result: &mut Vector3) {
         // result.x = self.x.max(min.x).min(max.x);
         // result.y = self.y.max(min.y).min(max.y);
@@ -106,6 +116,7 @@ impl TToolVector3 for CoordinateSytem3 {
         result.copy_from(clamp(v0, min, max));
     }
 
+    #[inline(always)]
     fn transform_coordinates(v0: &Vector3, transformation: &Matrix, result: &mut Vector3) {
         // let mut h = Vector3::to_homogeneous(v0);
         // h.w = 1.; // coordinate
@@ -125,6 +136,7 @@ impl TToolVector3 for CoordinateSytem3 {
 
     }
 
+    #[inline(always)]
     fn transform_coordinates_floats(x: Number, y: Number, z: Number, transformation: &Matrix, result: &mut Vector3) {
         // let mut h = Vector3::to_homogeneous(v0);
         // h.w = 1.; // coordinate
@@ -143,6 +155,7 @@ impl TToolVector3 for CoordinateSytem3 {
 
     }
 
+    #[inline(always)]
     fn transform_normal(v0: &Vector3, transformation: &Matrix, result: &mut Vector3) {
         // let mut h = Vector3::to_homogeneous(v0);
         // h.w = 0.; // normal
@@ -156,6 +169,7 @@ impl TToolVector3 for CoordinateSytem3 {
         result.z = v0.x * m[2] + v0.y * m[6] + v0.z * m[10];
     }
 
+    #[inline(always)]
     fn transform_normal_floats(x: Number, y: Number, z: Number, transformation: &Matrix, result: &mut Vector3) {
         // let mut h = Vector3::to_homogeneous(v0);
         // h.w = 0.; // normal
@@ -184,6 +198,7 @@ impl TToolVector3 for CoordinateSytem3 {
 
 
 impl TToolMatrix for CoordinateSytem3 {
+    #[inline(always)]
     fn try_inverse_mut(matrix: &mut Matrix) -> bool {
         // matrix.try_inverse_mut()
         let m = matrix.as_mut_slice();
@@ -252,20 +267,25 @@ impl TToolMatrix for CoordinateSytem3 {
         m[15] = cofact_33 * det_inv;
         return true;
     }
+    #[inline(always)]
     fn mul_to(a: &Matrix, b: &Matrix, y: & mut Matrix) {
         a.mul_to(b, y);
     }
+    #[inline(always)]
     fn matrix4_mul_vector4(a: &Matrix, b: &Vector4, y: & mut Vector4) {
         a.mul_to(b, y);
     }
+    #[inline(always)]
     fn matrix4_mul_matrix4(a: &Matrix, b: &Matrix, y: & mut Matrix) {
         a.mul_to(b, y);
     }
+    #[inline(always)]
     fn matrix4_compose(scaling: &Vector3, quaternion: &Quaternion, translation: &Vector3, result: &mut Matrix) {
         let rotation = quaternion.to_rotation_matrix();
         Self::matrix4_compose_rotation(scaling, &rotation, translation, result);
     }
 
+    #[inline(always)]
     fn matrix4_from_xyz_axes(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3, result: &mut Matrix) {
         result.copy_from_slice(&[
             axis1.x, axis1.y, axis1.z, 0.,
@@ -275,6 +295,7 @@ impl TToolMatrix for CoordinateSytem3 {
         ]);
     }
 
+    #[inline(always)]
     fn matrix4_decompose(m: &Matrix, scaling: Option<&mut Vector3>, quaternion: Option<&mut Quaternion>, translation: Option<&mut Vector3>) -> bool {
         match quaternion {
             Some(quaternion) => {
@@ -291,11 +312,13 @@ impl TToolMatrix for CoordinateSytem3 {
         }
     }
 
+    #[inline(always)]
     fn matrix4_compose_euler_angle(scaling: &Vector3, eulers: &Vector3, translation: &Vector3, result: &mut Matrix) {
         let rotation = Rotation3::from_euler_angles(eulers.z, eulers.x, eulers.y);
         Self::matrix4_compose_rotation(scaling, &rotation, translation, result);
     }
 
+    #[inline(always)]
     fn matrix4_compose_rotation(scaling: &Vector3, rotmat: &Rotation3, translation: &Vector3, result: &mut Matrix) {
         result.fill_with_identity();
 
@@ -306,6 +329,7 @@ impl TToolMatrix for CoordinateSytem3 {
         result.append_translation_mut(translation);
         // CoordinateSytem3::matrix4_compose_rotation(scaling, rotmat, translation, result)
     }
+    #[inline(always)]
     fn matrix4_compose_no_rotation(scaling: &Vector3, translation: &Vector3, result: &mut Matrix) {
         result.fill_with_identity();
         result.append_nonuniform_scaling_mut(scaling);
@@ -313,6 +337,7 @@ impl TToolMatrix for CoordinateSytem3 {
         // CoordinateSytem3::matrix4_compose_rotation(scaling, rotmat, translation, result)
     }
 
+    #[inline(always)]
     fn matrix4_decompose_rotation(m: &Matrix, scaling: Option<&mut Vector3>, rotation: Option<&mut Rotation3>, translation: Option<&mut Vector3>) -> bool {
         // todo!()
         if let Some(translation) = translation {
@@ -373,6 +398,7 @@ impl TToolMatrix for CoordinateSytem3 {
         }
     }
 
+    #[inline(always)]
     fn matrix4_compose_quaternion(scale: &Vector3, quaternion: &Quaternion, translation: &Vector3, result: &mut Matrix) {
         let m = result.as_mut_slice();
         let x = quaternion.i; let y = quaternion.j; let z = quaternion.k; let w = quaternion.w;
@@ -399,6 +425,7 @@ impl TToolMatrix for CoordinateSytem3 {
         m[15] = 1.;
     }
 
+    #[inline(always)]
     fn rotation_align_to(from: &Vector3, to: &Vector3, result: &mut Matrix) {
         let v: Vector3 = to.cross(from);
         let c = to.dot(from);
@@ -417,6 +444,7 @@ impl TToolMatrix for CoordinateSytem3 {
         result.set_column(3, &Vector4::new(m_03, m_07, m_11, m_15));
     }
 
+    #[inline(always)]
     fn lookat(&self, eye: &Vector3, target: &Vector3, up: &Vector3, result: &mut Isometry3) {
         let eye = Point3::from_slice(eye.as_slice());
         let target = Point3::from_slice(target.as_slice());
@@ -430,14 +458,118 @@ impl TToolMatrix for CoordinateSytem3 {
 }
 
 impl TToolRotation for CoordinateSytem3 {
+    #[inline(always)]
+    fn quaternion_from_rotation<T: nalgebra::RealField>(quaternion: &mut nalgebra::Quaternion<T>, rotmat: &nalgebra::Rotation3<T>) {
+        
+        let tr = rotmat[(0, 0)].clone() + rotmat[(1, 1)].clone() + rotmat[(2, 2)].clone();
+        let quarter: T = nalgebra::convert(0.25);
+    
+        let res = tr.clone().simd_gt(T::zero()).if_else3(
+            || {
+                let denom = (tr.clone() + T::one()).simd_sqrt() * nalgebra::convert(2.0);
+                nalgebra::Quaternion::new(
+                    quarter.clone() * denom.clone(),
+                    (rotmat[(2, 1)].clone() - rotmat[(1, 2)].clone()) / denom.clone(),
+                    (rotmat[(0, 2)].clone() - rotmat[(2, 0)].clone()) / denom.clone(),
+                    (rotmat[(1, 0)].clone() - rotmat[(0, 1)].clone()) / denom,
+                )
+            },
+            (
+                || {
+                    rotmat[(0, 0)].clone().simd_gt(rotmat[(1, 1)].clone())
+                        & rotmat[(0, 0)].clone().simd_gt(rotmat[(2, 2)].clone())
+                },
+                || {
+                    let denom = (T::one() + rotmat[(0, 0)].clone()
+                        - rotmat[(1, 1)].clone()
+                        - rotmat[(2, 2)].clone())
+                    .simd_sqrt()
+                        * nalgebra::convert(2.0);
+                    nalgebra::Quaternion::new(
+                        (rotmat[(2, 1)].clone() - rotmat[(1, 2)].clone()) / denom.clone(),
+                        quarter.clone() * denom.clone(),
+                        (rotmat[(0, 1)].clone() + rotmat[(1, 0)].clone()) / denom.clone(),
+                        (rotmat[(0, 2)].clone() + rotmat[(2, 0)].clone()) / denom,
+                    )
+                },
+            ),
+            (
+                || rotmat[(1, 1)].clone().simd_gt(rotmat[(2, 2)].clone()),
+                || {
+                    let denom = (T::one() + rotmat[(1, 1)].clone()
+                        - rotmat[(0, 0)].clone()
+                        - rotmat[(2, 2)].clone())
+                    .simd_sqrt()
+                        * nalgebra::convert(2.0);
+                    nalgebra::Quaternion::new(
+                        (rotmat[(0, 2)].clone() - rotmat[(2, 0)].clone()) / denom.clone(),
+                        (rotmat[(0, 1)].clone() + rotmat[(1, 0)].clone()) / denom.clone(),
+                        quarter.clone() * denom.clone(),
+                        (rotmat[(1, 2)].clone() + rotmat[(2, 1)].clone()) / denom,
+                    )
+                },
+            ),
+            || {
+                let denom = (T::one() + rotmat[(2, 2)].clone()
+                    - rotmat[(0, 0)].clone()
+                    - rotmat[(1, 1)].clone())
+                .simd_sqrt()
+                    * nalgebra::convert(2.0);
+                nalgebra::Quaternion::new(
+                    (rotmat[(1, 0)].clone() - rotmat[(0, 1)].clone()) / denom.clone(),
+                    (rotmat[(0, 2)].clone() + rotmat[(2, 0)].clone()) / denom.clone(),
+                    (rotmat[(1, 2)].clone() + rotmat[(2, 1)].clone()) / denom.clone(),
+                    quarter.clone() * denom,
+                )
+            },
+        );
+    
+        *quaternion = res;
+    }
+    #[inline(always)]
+    fn quaternion_to_rotation(quaternion: &nalgebra::Quaternion<Number>, rotation: &mut Rotation3) {
+        let n = 1. / quaternion.norm();
+        
+        let i = quaternion.i * n;
+        let j = quaternion.j * n;
+        let k = quaternion.k * n;
+        let w = quaternion.w * n;
+    
+        let ww = w * w;
+        let ii = i * i;
+        let jj = j * j;
+        let kk = k * k;
+        let ij = i * j * 2.0;
+        let wk = w * k * 2.0;
+        let wj = w * j * 2.0;
+        let ik = i * k * 2.0;
+        let jk = j * k * 2.0;
+        let wi = w * i * 2.0;
+    
+        rotation.matrix_mut_unchecked().copy_from_slice(
+            &[
+            ww + ii - jj - kk,
+            ij - wk,
+            wj + ik,
+            wk + ij,
+            ww - ii + jj - kk,
+            jk - wi,
+            ik - wj,
+            wi + jk,
+            ww - ii - jj + kk
+        ]);
+    }
+    #[inline(always)]
     fn quaternion_from_euler_angles(x: Number, y: Number, z: Number) -> Quaternion {
         Quaternion::from_rotation_matrix(&Self::rotation_matrix_from_euler_angles(x, y, z))
     }
 
+    #[inline(always)]
     fn quaternion_mut_yaw_pitch_roll(&self, yaw: Number, pitch: Number, roll: Number, result: &mut Quaternion) {
         *result = Quaternion::from_rotation_matrix(&Self::rotation_matrix_from_euler_angles(yaw, pitch, roll));
     }
 
+    #[inline(always)]
     fn quaternion_from_unit_vector(axis: &nalgebra::Unit<Vector3>, vec_to: &Vector3) -> Quaternion {
         let r = Vector3::dot(axis, vec_to) + 1.0;
         let quat = if r < f32::EPSILON {
@@ -457,6 +589,7 @@ impl TToolRotation for CoordinateSytem3 {
         todo!()
     }
 
+    #[inline(always)]
     fn quaternion_to_euler_angles(&self, quaternion: &Quaternion, result: &mut Vector3) {
         let (z, x, y) = quaternion.euler_angles();
         // match self.mode {
@@ -470,6 +603,7 @@ impl TToolRotation for CoordinateSytem3 {
         result.copy_from_slice(&[x, y, z]);
     }
 
+    #[inline(always)]
     fn rotation_matrix_from_euler_angles_toref(x: Number, y: Number, z: Number, result: &mut Rotation3) {
         let (sr, cr) = x.simd_sin_cos();
         let (sp, cp) = y.simd_sin_cos();
@@ -487,6 +621,7 @@ impl TToolRotation for CoordinateSytem3 {
             cp * cr,
         ]);
     }
+    #[inline(always)]
     fn rotation_matrix_from_euler_angles(x: Number, y: Number, z: Number) -> Rotation3 {
         // match self.mode {
         //     ECoordinateSytem3::Left => {
@@ -518,6 +653,7 @@ impl TToolRotation for CoordinateSytem3 {
         ))
     }
 
+    #[inline(always)]
     fn rotation_matrix_mut_yaw_pitch_roll(&self, yaw: Number, pitch: Number, roll: Number, result: &mut Rotation3) {
         // match self.mode {
         //     ECoordinateSytem3::Left => {
@@ -534,6 +670,7 @@ impl TToolRotation for CoordinateSytem3 {
         todo!()
     }
 
+    #[inline(always)]
     fn rotation_matrix_to_euler_angles(&self, rotation: &Rotation3, result: &mut Vector3) {
         let (z, x, y) = rotation.euler_angles();
         // match self.mode {
@@ -547,15 +684,18 @@ impl TToolRotation for CoordinateSytem3 {
         result.copy_from_slice(&[x, y, z]);
     }
 
+    #[inline(always)]
     fn quaternion_mut_euler_angles(x: Number, y: Number, z: Number, result: &mut Quaternion) {
         *result = Self::quaternion_from_euler_angles(x, y, z);
     }
 
+    #[inline(always)]
     fn rotation_matrix_mut_euler_angles(x: Number, y: Number, z: Number, result: &mut Rotation3) {
         *result = Self::rotation_matrix_from_euler_angles(x, y, z);
     }
     ///
     /// 会卡死原因未知
+    #[inline(always)]
     fn rotation_matrix_from_axises(axis1: &Vector3, axis2: &Vector3, axis3: &Vector3) -> Rotation3 {
         let mut m = Matrix3::identity();
         m.copy_from_slice(&[
@@ -565,6 +705,7 @@ impl TToolRotation for CoordinateSytem3 {
         ]);
         return Rotation3::from_matrix(&m);
     }
+    #[inline(always)]
     fn quaternion_from_axis_angle(axis1: &Vector3, radian: Number) -> Quaternion {
         let (sin, cos) = f32::simd_sin_cos(radian / 2.);
         let quat = nalgebra::Quaternion::new(

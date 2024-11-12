@@ -37,4 +37,8 @@ impl Plane {
             + (self.normal[2] * z))
             + self.d;
     }
+    pub fn dot_coordinate2(&self, center: &Vector3) -> Number {
+        return self.normal.dot(center)
+            + self.d;
+    }
 }
