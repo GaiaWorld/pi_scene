@@ -1,6 +1,6 @@
 [package]
 name = "pi_scene_math"
-version = "0.0.9"
+version = "0.0.10"
 authors = ["baip0002 <2494156981@qq.com>"]
 edition = "2021"
 description = "Scene Math."
@@ -15,11 +15,7 @@ curve_no_nalgebra = []
 [dependencies]
 approx = "0.5"
 nalgebra = { version = "0.32", features = ["convert-glam025"] }
-pi_animation = { version = "0.1", registry = "yn" }
-pi_curves = { version = "0.1", registry = "yn" }
 
 [patch.yn]
-pi_animation = { path = "../../../pi_animation" }
-pi_curves = { path = "../../../pi_curves" }
 
 # [[example]]
